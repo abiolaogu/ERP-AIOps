@@ -9,27 +9,24 @@ import { authProvider } from "@/authProvider";
 import { theme } from "@/theme";
 import { MainLayout } from "@/components/Layout/MainLayout";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lazyNamed = (importFn: () => Promise<any>, name: string) =>
+  lazy(() => importFn().then((m) => ({ default: m[name] ?? m.default })));
+
 // Lazy-loaded pages
-const Dashboard = lazy(() => import("@/pages/Dashboard").then(m => ({ default: m.default ?? m.Dashboard })));
-const Login = lazy(() => import("@/pages/Login").then(m => ({ default: m.default ?? m.Login })));
-
-const IncidentList = lazy(() => import("@/pages/incidents/IncidentList").then(m => ({ default: m.default ?? m.IncidentList })));
-const IncidentShow = lazy(() => import("@/pages/incidents/IncidentShow").then(m => ({ default: m.default ?? m.IncidentShow })));
-const IncidentCreate = lazy(() => import("@/pages/incidents/IncidentCreate").then(m => ({ default: m.default ?? m.IncidentCreate })));
-
-const AnomalyList = lazy(() => import("@/pages/anomalies/AnomalyList").then(m => ({ default: m.default ?? m.AnomalyList })));
-const AnomalyShow = lazy(() => import("@/pages/anomalies/AnomalyShow").then(m => ({ default: m.default ?? m.AnomalyShow })));
-
-const RuleList = lazy(() => import("@/pages/rules/RuleList").then(m => ({ default: m.default ?? m.RuleList })));
-const RuleCreate = lazy(() => import("@/pages/rules/RuleCreate").then(m => ({ default: m.default ?? m.RuleCreate })));
-
-const TopologyView = lazy(() => import("@/pages/topology/TopologyView").then(m => ({ default: m.default ?? m.TopologyView })));
-
-const RemediationList = lazy(() => import("@/pages/remediation/RemediationList").then(m => ({ default: m.default ?? m.RemediationList })));
-
-const CostDashboard = lazy(() => import("@/pages/cost/CostDashboard").then(m => ({ default: m.default ?? m.CostDashboard })));
-
-const SecurityDashboard = lazy(() => import("@/pages/security/SecurityDashboard").then(m => ({ default: m.default ?? m.SecurityDashboard })));
+const Dashboard = lazyNamed(() => import("@/pages/Dashboard"), "Dashboard");
+const Login = lazyNamed(() => import("@/pages/Login"), "Login");
+const IncidentList = lazyNamed(() => import("@/pages/incidents/IncidentList"), "IncidentList");
+const IncidentShow = lazyNamed(() => import("@/pages/incidents/IncidentShow"), "IncidentShow");
+const IncidentCreate = lazyNamed(() => import("@/pages/incidents/IncidentCreate"), "IncidentCreate");
+const AnomalyList = lazyNamed(() => import("@/pages/anomalies/AnomalyList"), "AnomalyList");
+const AnomalyShow = lazyNamed(() => import("@/pages/anomalies/AnomalyShow"), "AnomalyShow");
+const RuleList = lazyNamed(() => import("@/pages/rules/RuleList"), "RuleList");
+const RuleCreate = lazyNamed(() => import("@/pages/rules/RuleCreate"), "RuleCreate");
+const TopologyView = lazyNamed(() => import("@/pages/topology/TopologyView"), "TopologyView");
+const RemediationList = lazyNamed(() => import("@/pages/remediation/RemediationList"), "RemediationList");
+const CostDashboard = lazyNamed(() => import("@/pages/cost/CostDashboard"), "CostDashboard");
+const SecurityDashboard = lazyNamed(() => import("@/pages/security/SecurityDashboard"), "SecurityDashboard");
 
 const PageLoader: React.FC = () => (
   <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>

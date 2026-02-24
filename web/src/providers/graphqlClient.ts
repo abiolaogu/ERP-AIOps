@@ -6,7 +6,10 @@ const TOKEN_KEY = "erp_aiops_auth_token";
 export const graphqlClient = new GraphQLClient(HASURA_URL, {
   headers: () => {
     const token = localStorage.getItem(TOKEN_KEY);
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {} as Record<string, string>;
   },
 });
 
