@@ -1,0 +1,44 @@
+module: ERP-AIOps
+version: "0.1.0"
+
+dependencies:
+  required:
+    - module: ERP-Platform
+      min_version: "0.1.0"
+      capabilities:
+        - authentication
+        - tenant_management
+        - module_registry
+
+  optional:
+    - module: ERP-Observability
+      min_version: "0.1.0"
+      capabilities:
+        - metrics_ingestion
+        - logs_ingestion
+        - traces_ingestion
+        - alerting
+      integration:
+        type: event_driven
+        protocol: otlp
+
+    - module: ERP-IAM
+      min_version: "0.1.0"
+      capabilities:
+        - role_management
+        - permission_management
+
+ports:
+  gateway: 8090
+  rust_api: 8080
+  ai_brain: 8001
+  yugabytedb: 5433
+  dragonfly: 6379
+  hasura: 19109
+  frontend: 5179
+
+health_endpoints:
+  gateway: /healthz
+  rust_api: /healthz
+  ai_brain: /health
+  hasura: /healthz

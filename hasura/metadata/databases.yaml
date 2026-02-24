@@ -1,0 +1,141 @@
+- name: erp_aiops
+  kind: postgres
+  configuration:
+    connection_info:
+      database_url:
+        from_env: HASURA_GRAPHQL_DATABASE_URL
+      pool_settings:
+        max_connections: 50
+        idle_timeout: 180
+  tables:
+    - table:
+        schema: public
+        name: incidents
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      insert_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            check:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      update_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      delete_permissions:
+        - role: user
+          permission:
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: anomalies
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      insert_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            check:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: aiops_rules
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      insert_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            check:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      update_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: topology_nodes
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: remediation_actions
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      insert_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            check:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: cost_reports
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+
+    - table:
+        schema: public
+        name: security_findings
+      select_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id
+      update_permissions:
+        - role: user
+          permission:
+            columns: "*"
+            filter:
+              tenant_id:
+                _eq: X-Hasura-Tenant-Id

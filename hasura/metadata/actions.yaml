@@ -1,0 +1,137 @@
+actions:
+  - name: analyzeIncident
+    definition:
+      kind: synchronous
+      handler: "{{AI_BRAIN_URL}}/analyze/incident"
+      timeout: 30
+      headers:
+        - name: X-Tenant-ID
+          value_from_env: X-Hasura-Tenant-Id
+      request_transform:
+        method: POST
+        content_type: application/json
+    permissions:
+      - role: user
+    comment: "Analyze an incident using AI to determine root cause and suggest actions"
+
+  - name: triggerRemediation
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/remediation/execute"
+      timeout: 60
+      headers:
+        - name: X-Tenant-ID
+          value_from_env: X-Hasura-Tenant-Id
+      request_transform:
+        method: POST
+        content_type: application/json
+    permissions:
+      - role: user
+    comment: "Trigger a remediation action for an incident"
+
+  - name: forecastMetric
+    definition:
+      kind: synchronous
+      handler: "{{AI_BRAIN_URL}}/forecast"
+      timeout: 30
+      headers:
+        - name: X-Tenant-ID
+          value_from_env: X-Hasura-Tenant-Id
+      request_transform:
+        method: POST
+        content_type: application/json
+    permissions:
+      - role: user
+    comment: "Forecast future metric values using AI"
+
+  - name: correlateEvents
+    definition:
+      kind: synchronous
+      handler: "{{AI_BRAIN_URL}}/correlate"
+      timeout: 30
+      headers:
+        - name: X-Tenant-ID
+          value_from_env: X-Hasura-Tenant-Id
+      request_transform:
+        method: POST
+        content_type: application/json
+    permissions:
+      - role: user
+    comment: "Correlate events to identify related groups"
+
+custom_types:
+  input_objects:
+    - name: AnalyzeIncidentInput
+      fields:
+        - name: incident_id
+          type: uuid!
+        - name: title
+          type: String!
+        - name: description
+          type: String
+        - name: severity
+          type: String
+        - name: affected_services
+          type: "[String]"
+
+    - name: TriggerRemediationInput
+      fields:
+        - name: incident_id
+          type: uuid
+        - name: action_type
+          type: String!
+        - name: target_service
+          type: String!
+        - name: parameters
+          type: jsonb
+
+    - name: ForecastMetricInput
+      fields:
+        - name: metric_name
+          type: String!
+        - name: service
+          type: String!
+        - name: horizon_hours
+          type: Int
+
+    - name: CorrelateEventsInput
+      fields:
+        - name: events
+          type: "[jsonb!]!"
+        - name: time_window_secs
+          type: Int
+
+  objects:
+    - name: AnalyzeIncidentOutput
+      fields:
+        - name: incident_id
+          type: uuid!
+        - name: root_cause
+          type: String
+        - name: confidence
+          type: Float!
+        - name: impact_assessment
+          type: String!
+
+    - name: RemediationOutput
+      fields:
+        - name: id
+          type: uuid!
+        - name: status
+          type: String!
+
+    - name: ForecastOutput
+      fields:
+        - name: metric_name
+          type: String!
+        - name: anomaly_probability
+          type: Float!
+
+    - name: CorrelationOutput
+      fields:
+        - name: total_events
+          type: Int!
+        - name: correlated_events
+          type: Int!
+        - name: correlation_rate
+          type: Float!

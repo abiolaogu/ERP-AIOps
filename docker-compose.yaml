@@ -1,0 +1,140 @@
+# Root docker-compose file for ERP-AIOps module.
+# This is the root compose file — mirrors infra/docker-compose.yaml for convenience.
+version: "3.9"
+
+services:
+  aiops-gateway:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.gateway
+    environment:
+      PORT: "8090"
+      MODULE_NAME: "ERP-AIOps"
+      RUST_API_URL: "http://rust-api:8080"
+      AI_BRAIN_URL: "http://ai-brain:8001"
+      CORS_ORIGINS: "http://localhost:5179,http://localhost:3000"
+    ports:
+      - "8090:8090"
+    depends_on:
+      rust-api:
+        condition: service_healthy
+      ai-brain:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+
+  rust-api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    environment:
+      RUST_API_PORT: "8080"
+      RUST_LOG: "info,opstrac=debug"
+      DATABASE_URL: "postgresql://erp:erp@yugabytedb:5433/erp_aiops"
+      REDIS_URL: "redis://dragonfly:6379"
+    ports:
+      - "8080:8080"
+    depends_on:
+      yugabytedb:
+        condition: service_healthy
+      dragonfly:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  ai-brain:
+    build:
+      context: ./services/ai-brain
+      dockerfile: Dockerfile
+    environment:
+      PORT: "8001"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_MODEL: "${OPENAI_MODEL:-gpt-4o}"
+      DATABASE_URL: "postgresql://erp:erp@yugabytedb:5433/erp_aiops"
+    ports:
+      - "8001:8001"
+    depends_on:
+      yugabytedb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  yugabytedb:
+    image: yugabytedb/yugabyte:2.20.1.0-b97
+    command: >
+      bin/yugabyted start
+      --daemon=false
+      --listen=0.0.0.0
+      --tserver_flags="ysql_enable_auth=false"
+    ports:
+      - "5433:5433"
+      - "7100:7100"
+      - "9042:9042"
+      - "15433:15433"
+    volumes:
+      - yugabyte-data:/root/var
+    healthcheck:
+      test: ["CMD", "bin/ysqlsh", "-U", "yugabyte", "-c", "SELECT 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  yugabytedb-init:
+    image: yugabytedb/yugabyte:2.20.1.0-b97
+    depends_on:
+      yugabytedb:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      bin/ysqlsh -h yugabytedb -p 5433 -U yugabyte -c 'CREATE DATABASE erp_aiops' || true &&
+      bin/ysqlsh -h yugabytedb -p 5433 -U yugabyte -d erp_aiops -c 'CREATE USER erp WITH PASSWORD '\''erp'\''' || true &&
+      bin/ysqlsh -h yugabytedb -p 5433 -U yugabyte -d erp_aiops -c 'GRANT ALL PRIVILEGES ON DATABASE erp_aiops TO erp' || true &&
+      bin/ysqlsh -h yugabytedb -p 5433 -U yugabyte -d erp_aiops -f /migrations/001_initial_schema.sql
+      "
+    volumes:
+      - ./migrations:/migrations
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - dragonfly-data:/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  hasura:
+    image: hasura/graphql-engine:v2.38.0
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: "postgresql://erp:erp@yugabytedb:5433/erp_aiops"
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: "hasura-admin-secret"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "anonymous"
+      HASURA_GRAPHQL_SERVER_PORT: "19109"
+    ports:
+      - "19109:19109"
+    depends_on:
+      yugabytedb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:19109/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  yugabyte-data:
+  dragonfly-data:
