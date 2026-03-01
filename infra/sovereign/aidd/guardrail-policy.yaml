@@ -1,0 +1,47 @@
+apiVersion: aidd.billyronks/v1
+kind: GuardrailPolicy
+metadata:
+  name: erp-aiops-aidd-guardrail
+  generatedAt: "2026-02-28"
+spec:
+  category: "AIOps Automation"
+  modes:
+    autonomous:
+      minConfidence: 0.84
+      maxBlastRadius: 400
+      maxEstimatedCostUsd: 5000
+      requiresApproval: false
+    supervised:
+      minConfidence: 0.72
+      maxBlastRadius: 5000
+      maxEstimatedCostUsd: 75000
+      requiresApproval: true
+    protected:
+      blocks:
+        - cross_tenant_access
+        - privilege_escalation
+        - unsafe_destructive_delete
+        - policy_bypass
+  mandatoryHeaders:
+    - X-Tenant-ID
+    - X-Request-ID
+  infraOps:
+    topic_creation:
+      tier: protected
+      requiresApproval: true
+      auditRequired: true
+    bucket_provisioning:
+      tier: protected
+      requiresApproval: true
+      auditRequired: true
+    tablespace_creation:
+      tier: protected
+      requiresApproval: true
+      auditRequired: true
+    acl_modification:
+      tier: protected
+      requiresApproval: true
+      auditRequired: true
+  audit:
+    immutableLog: true
+    eventTopic: "tenant.{tenant_id}.aidd.guardrails"
