@@ -1,0 +1,143 @@
+# AIOps Central Ingestion Pipeline
+# Consumes events from all 24 module topic prefixes + aiops.module.health
+# and routes them to the Rust API by category.
+
+input:
+  kafka:
+    addresses:
+      - "${REDPANDA_BROKERS:-redpanda:9092}"
+    topics:
+      - "ai.*"
+      - "aiops.*"
+      - "assistant.*"
+      - "autonomous-coding.*"
+      - "bi.*"
+      - "bss-oss.*"
+      - "crm.*"
+      - "church-management.*"
+      - "commerce.*"
+      - "dbaas.*"
+      - "finance.*"
+      - "hcm.*"
+      - "healthcare.*"
+      - "iam.*"
+      - "marketing.*"
+      - "observability.*"
+      - "platform.*"
+      - "projects.*"
+      - "scm.*"
+      - "school-management.*"
+      - "web-hosting.*"
+      - "workspace.*"
+      - "ecommerce.*"
+      - "ipaas.*"
+      - "aiops.module.health"
+    consumer_group: "aiops-central-ingestion"
+    start_from_oldest: false
+    tls:
+      enabled: "${REDPANDA_TLS_ENABLED:-false}"
+    sasl:
+      mechanism: "${REDPANDA_SASL_MECHANISM:-SCRAM-SHA-256}"
+      user: "${REDPANDA_SASL_USER:-erp-aiops-svc}"
+      password: "${REDPANDA_SASL_PASSWORD:-}"
+
+pipeline:
+  processors:
+    # Validate envelope has required fields
+    - bloblang: |
+        root = this
+        meta source_topic = meta("kafka_topic")
+        meta source_partition = meta("kafka_partition")
+        meta source_offset = meta("kafka_offset")
+
+    - branch:
+        request_map: |
+          root = if this.tenant_id == null || this.event_type == null {
+            throw("missing required envelope fields: tenant_id, event_type")
+          }
+        processors: []
+        result_map: "root = this"
+
+    # Enrich with source metadata
+    - bloblang: |
+        root = this
+        root.ingestion_metadata = {
+          "source_topic": meta("source_topic"),
+          "source_partition": meta("source_partition"),
+          "source_offset": meta("source_offset"),
+          "ingested_at": now()
+        }
+
+    # Categorize by event type
+    - bloblang: |
+        let topic = meta("source_topic")
+        root = this
+        root.category = match {
+          $topic.has_prefix("aiops.module.health") => "health",
+          this.event_type.has_prefix("incident") => "incident",
+          this.event_type.has_prefix("metric") || this.event_type.has_prefix("operational_metric") => "metric",
+          this.event_type.has_prefix("observability") => "observability",
+          _ => "event"
+        }
+
+output:
+  switch:
+    cases:
+      - check: this.category == "health"
+        output:
+          http_client:
+            url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/health"
+            verb: POST
+            headers:
+              Content-Type: application/json
+              X-Tenant-ID: "${! this.tenant_id }"
+            max_in_flight: 64
+            retries: 3
+            retry_period: "1s"
+
+      - check: this.category == "incident"
+        output:
+          http_client:
+            url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/incident"
+            verb: POST
+            headers:
+              Content-Type: application/json
+              X-Tenant-ID: "${! this.tenant_id }"
+            max_in_flight: 64
+            retries: 3
+            retry_period: "1s"
+
+      - check: this.category == "metric"
+        output:
+          http_client:
+            url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/metric"
+            verb: POST
+            headers:
+              Content-Type: application/json
+              X-Tenant-ID: "${! this.tenant_id }"
+            max_in_flight: 64
+            retries: 3
+            retry_period: "1s"
+
+      - check: this.category == "observability"
+        output:
+          http_client:
+            url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/observability"
+            verb: POST
+            headers:
+              Content-Type: application/json
+              X-Tenant-ID: "${! this.tenant_id }"
+            max_in_flight: 64
+            retries: 3
+            retry_period: "1s"
+
+      - output:
+          http_client:
+            url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/event"
+            verb: POST
+            headers:
+              Content-Type: application/json
+              X-Tenant-ID: "${! this.tenant_id }"
+            max_in_flight: 64
+            retries: 3
+            retry_period: "1s"

@@ -13,6 +13,9 @@ use std::sync::Arc;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
+mod actions;
+mod webhooks;
+
 use opstrac_core::*;
 
 // ──────────────────────────────────────────────
@@ -57,6 +60,7 @@ struct ListParams {
     status: Option<String>,
     severity: Option<String>,
     service: Option<String>,
+    module: Option<String>,
 }
 
 // ──────────────────────────────────────────────
@@ -434,6 +438,174 @@ async fn list_security_findings(
 }
 
 // ──────────────────────────────────────────────
+// Ingestion Types
+// ──────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct IngestHealthPayload {
+    module_name: String,
+    status: Option<String>,
+    latency_ms: Option<f64>,
+    error_rate: Option<f64>,
+    pod_count: Option<i32>,
+    metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+struct IngestIncidentPayload {
+    title: String,
+    description: Option<String>,
+    severity: Option<String>,
+    source: Option<String>,
+    affected_services: Option<Vec<String>>,
+    correlation_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+struct IngestMetricPayload {
+    module_name: String,
+    metric_name: String,
+    value: f64,
+    unit: Option<String>,
+    dimensions: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+struct IngestObservabilityPayload {
+    source: String,
+    data_type: String,
+    payload: serde_json::Value,
+}
+
+// ──────────────────────────────────────────────
+// Handlers: Ingestion
+// ──────────────────────────────────────────────
+
+async fn ingest_health(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Extension(tenant): axum::extract::Extension<TenantId>,
+    Json(input): Json<IngestHealthPayload>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let status = input.status.as_deref().unwrap_or("healthy");
+
+    sqlx::query(
+        r#"INSERT INTO module_health_status (tenant_id, module_name, status, latency_ms, error_rate, pod_count, metadata, last_heartbeat_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
+           ON CONFLICT (tenant_id, module_name) DO UPDATE SET
+             status = EXCLUDED.status,
+             latency_ms = EXCLUDED.latency_ms,
+             error_rate = EXCLUDED.error_rate,
+             pod_count = EXCLUDED.pod_count,
+             metadata = EXCLUDED.metadata,
+             last_heartbeat_at = now(),
+             updated_at = now()"#,
+    )
+    .bind(&tenant.0)
+    .bind(&input.module_name)
+    .bind(status)
+    .bind(input.latency_ms)
+    .bind(input.error_rate)
+    .bind(input.pod_count)
+    .bind(input.metadata.as_ref().unwrap_or(&serde_json::json!({})))
+    .execute(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(serde_json::json!({
+        "status": "accepted",
+        "module": input.module_name
+    })))
+}
+
+async fn ingest_incident(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Extension(tenant): axum::extract::Extension<TenantId>,
+    Json(input): Json<IngestIncidentPayload>,
+) -> Result<(StatusCode, Json<serde_json::Value>), StatusCode> {
+    let row: (Uuid,) = sqlx::query_as(
+        r#"INSERT INTO incidents (tenant_id, title, description, severity, source, affected_services, correlation_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id"#,
+    )
+    .bind(&tenant.0)
+    .bind(&input.title)
+    .bind(&input.description)
+    .bind(input.severity.as_deref().unwrap_or("medium"))
+    .bind(&input.source)
+    .bind(&input.affected_services)
+    .bind(input.correlation_id)
+    .fetch_one(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok((StatusCode::CREATED, Json(serde_json::json!({
+        "status": "created",
+        "incident_id": row.0
+    }))))
+}
+
+async fn ingest_metric(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Extension(tenant): axum::extract::Extension<TenantId>,
+    Json(input): Json<IngestMetricPayload>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    sqlx::query(
+        r#"INSERT INTO operational_metrics (tenant_id, module_name, metric_name, value, unit, dimensions)
+           VALUES ($1, $2, $3, $4, $5, $6)"#,
+    )
+    .bind(&tenant.0)
+    .bind(&input.module_name)
+    .bind(&input.metric_name)
+    .bind(input.value)
+    .bind(&input.unit)
+    .bind(input.dimensions.as_ref().unwrap_or(&serde_json::json!({})))
+    .execute(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(serde_json::json!({
+        "status": "accepted",
+        "module": input.module_name,
+        "metric": input.metric_name
+    })))
+}
+
+async fn ingest_observability(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Extension(tenant): axum::extract::Extension<TenantId>,
+    Json(input): Json<IngestObservabilityPayload>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    // Store as an operational metric with observability source for correlation
+    sqlx::query(
+        r#"INSERT INTO operational_metrics (tenant_id, module_name, metric_name, value, unit, dimensions)
+           VALUES ($1, $2, $3, $4, $5, $6)"#,
+    )
+    .bind(&tenant.0)
+    .bind(&input.source)
+    .bind(format!("observability.{}", input.data_type))
+    .bind(1.0_f64)
+    .bind("event")
+    .bind(&input.payload)
+    .execute(&state.db)
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(serde_json::json!({
+        "status": "accepted",
+        "source": input.source,
+        "data_type": input.data_type
+    })))
+}
+
+async fn ingest_event(
+    axum::extract::Extension(_tenant): axum::extract::Extension<TenantId>,
+    Json(input): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!(event = %input, "Generic event ingested");
+    Json(serde_json::json!({ "status": "accepted" }))
+}
+
+// ──────────────────────────────────────────────
 // Main
 // ──────────────────────────────────────────────
 
@@ -477,6 +649,27 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/cost/analysis", get(cost_analysis))
         // Security
         .route("/api/v1/security/findings", get(list_security_findings))
+        // Ingestion
+        .route("/api/v1/ingest/health", post(ingest_health))
+        .route("/api/v1/ingest/incident", post(ingest_incident))
+        .route("/api/v1/ingest/metric", post(ingest_metric))
+        .route("/api/v1/ingest/event", post(ingest_event))
+        .route("/api/v1/ingest/observability", post(ingest_observability))
+        // Hasura Actions
+        .route("/api/v1/actions/module-health-check", post(actions::module_health_check))
+        .route("/api/v1/actions/evaluate-guardrail", post(actions::evaluate_guardrail))
+        .route("/api/v1/actions/create-maintenance-window", post(actions::create_maintenance_window))
+        .route("/api/v1/actions/execute-runbook", post(actions::execute_runbook))
+        .route("/api/v1/actions/slo-status", post(actions::slo_status))
+        // Event Trigger Webhooks
+        .route("/api/v1/webhooks/incident-created", post(webhooks::on_incident_created))
+        .route("/api/v1/webhooks/anomaly-detected", post(webhooks::on_anomaly_detected))
+        .route("/api/v1/webhooks/health-status-changed", post(webhooks::on_health_status_changed))
+        .route("/api/v1/webhooks/slo-breached", post(webhooks::on_slo_breached))
+        .route("/api/v1/webhooks/guardrail-resolved", post(webhooks::on_guardrail_resolved))
+        .route("/api/v1/webhooks/alertmanager", post(webhooks::on_alertmanager_alert))
+        // Module Commands
+        .route("/api/v1/aiops/commands/:module", get(actions::get_module_commands).post(actions::send_module_command))
         // Middleware
         .layer(middleware::from_fn(tenant_middleware))
         .with_state(state);

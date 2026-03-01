@@ -42,6 +42,23 @@ spec:
       tier: protected
       requiresApproval: true
       auditRequired: true
+  crossModuleOperations:
+    description: "Any action targeting a module other than the originator requires protected tier"
+    enforced: true
+    requiredTier: protected
+    requiredApprovals: 2
+    timeoutMinutes: 60
+    auditRequired: true
+    allowedSourceModules:
+      - erp-aiops
+    notifyOnEscalation: true
+
+  auditTopics:
+    guardrailAudit: "aiops.guardrail.audit"
+    description: "Immutable audit destination for all guardrail evaluation results"
+    format: cloudevents
+    retention: "90d"
+
   audit:
     immutableLog: true
     eventTopic: "tenant.{tenant_id}.aidd.guardrails"

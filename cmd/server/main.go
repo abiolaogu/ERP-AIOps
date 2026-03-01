@@ -231,6 +231,38 @@ func main() {
 	proxyRoute(mux, "/v1/aiops/cost", rustAPI)
 	proxyRoute(mux, "/v1/aiops/security", rustAPI)
 
+	// --- Ingestion routes ---
+
+	proxyRoute(mux, "/api/v1/ingest/health", rustAPI)
+	proxyRoute(mux, "/api/v1/ingest/incident", rustAPI)
+	proxyRoute(mux, "/api/v1/ingest/metric", rustAPI)
+	proxyRoute(mux, "/api/v1/ingest/event", rustAPI)
+	proxyRoute(mux, "/api/v1/ingest/observability", rustAPI)
+
+	// --- Hasura Action routes ---
+
+	proxyRoute(mux, "/api/v1/actions/module-health-check", rustAPI)
+	proxyRoute(mux, "/api/v1/actions/evaluate-guardrail", rustAPI)
+	proxyRoute(mux, "/api/v1/actions/create-maintenance-window", rustAPI)
+	proxyRoute(mux, "/api/v1/actions/execute-runbook", rustAPI)
+	proxyRoute(mux, "/api/v1/actions/slo-status", rustAPI)
+
+	// --- Event Trigger Webhook routes ---
+
+	proxyRoute(mux, "/api/v1/webhooks/incident-created", rustAPI)
+	proxyRoute(mux, "/api/v1/webhooks/anomaly-detected", rustAPI)
+	proxyRoute(mux, "/api/v1/webhooks/health-status-changed", rustAPI)
+	proxyRoute(mux, "/api/v1/webhooks/slo-breached", rustAPI)
+	proxyRoute(mux, "/api/v1/webhooks/guardrail-resolved", rustAPI)
+
+	// --- Alertmanager Webhook ---
+
+	proxyRoute(mux, "/api/v1/webhooks/alertmanager", rustAPI)
+
+	// --- Module Command API ---
+
+	proxyRoute(mux, "/api/v1/aiops/commands", rustAPI)
+
 	// --- Reverse-proxy routes to AI Brain backend ---
 
 	aiBrain := envOrDefault("AI_BRAIN_URL", "http://ai-brain:8001")
