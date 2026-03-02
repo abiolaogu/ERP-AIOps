@@ -1,0 +1,265 @@
+# AIOps Module Registry
+# Central registry of all ERP modules for health monitoring and operations
+version: "1.0"
+updated_at: "2026-03-02"
+
+modules:
+  - name: ERP-AI
+    frontend_urls: ["http://localhost:5180"]
+    owning_team: team-ai
+    topic_prefix: "*.*.erp.ai"
+    health_endpoint: "http://erp-ai:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-AIOps
+    frontend_urls: ["http://localhost:5179"]
+    owning_team: team-aiops
+    topic_prefix: "*.*.erp.aiops"
+    health_endpoint: "http://erp-aiops:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 500
+      error_rate_pct: 0.05
+
+  - name: ERP-Assistant
+    frontend_urls: ["http://localhost:5181"]
+    owning_team: team-assistant
+    topic_prefix: "*.*.erp.assistant"
+    health_endpoint: "http://erp-assistant:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Autonomous-Coding
+    frontend_urls: ["http://localhost:5182"]
+    owning_team: team-autonomous-coding
+    topic_prefix: "*.*.erp.autonomous-coding"
+    health_endpoint: "http://erp-autonomous-coding:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-BI
+    frontend_urls: ["http://localhost:5195"]
+    owning_team: team-bi
+    topic_prefix: "*.*.erp.bi"
+    health_endpoint: "http://erp-bi:3000/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 3000
+      error_rate_pct: 0.1
+
+  - name: ERP-BSS-OSS
+    frontend_urls: ["http://localhost:5183"]
+    owning_team: team-bss-oss
+    topic_prefix: "*.*.erp.bss-oss"
+    health_endpoint: "http://erp-bss-oss:8087/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-CRM
+    frontend_urls: ["http://localhost:5186"]
+    owning_team: team-crm
+    topic_prefix: "*.*.erp.crm"
+    health_endpoint: "http://erp-crm:8081/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Church-Management
+    frontend_urls: ["http://localhost:5184"]
+    owning_team: team-church-management
+    topic_prefix: "*.*.erp.church-management"
+    health_endpoint: "http://erp-church-management:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Commerce
+    frontend_urls: ["http://localhost:5185"]
+    owning_team: team-commerce
+    topic_prefix: "*.*.erp.commerce"
+    health_endpoint: "http://erp-commerce:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 1000
+      error_rate_pct: 0.05
+
+  - name: ERP-DBaaS
+    frontend_urls: ["http://localhost:3000"]
+    owning_team: team-dbaas
+    topic_prefix: "*.*.erp.dbaas"
+    health_endpoint: "http://erp-dbaas:8090/healthz"
+    slo_targets:
+      availability: 99.99
+      latency_p95_ms: 500
+      error_rate_pct: 0.01
+
+  - name: ERP-Finance
+    frontend_urls: ["http://localhost:5187"]
+    owning_team: team-finance
+    topic_prefix: "*.*.erp.finance"
+    health_endpoint: "http://erp-finance:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 1000
+      error_rate_pct: 0.05
+
+  - name: ERP-HCM
+    frontend_urls: ["http://localhost:3012"]
+    owning_team: team-hcm
+    topic_prefix: "*.*.erp.hcm"
+    health_endpoint: "http://erp-hcm:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Healthcare
+    frontend_urls: ["http://localhost:5196"]
+    owning_team: team-healthcare
+    topic_prefix: "*.*.erp.healthcare"
+    health_endpoint: "http://erp-healthcare:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 1000
+      error_rate_pct: 0.05
+
+  - name: ERP-IAM
+    frontend_urls: ["http://localhost:3011"]
+    owning_team: team-iam
+    topic_prefix: "*.*.erp.iam"
+    health_endpoint: "http://erp-iam:8091/healthz"
+    slo_targets:
+      availability: 99.99
+      latency_p95_ms: 500
+      error_rate_pct: 0.01
+
+  - name: ERP-Marketing
+    frontend_urls: ["http://localhost:5188"]
+    owning_team: team-marketing
+    topic_prefix: "*.*.erp.marketing"
+    health_endpoint: "http://erp-marketing:8087/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Observability
+    frontend_urls: ["http://localhost:5177"]
+    owning_team: team-observability
+    topic_prefix: "*.*.erp.observability"
+    health_endpoint: "http://erp-observability:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 500
+      error_rate_pct: 0.05
+
+  - name: ERP-Platform
+    frontend_urls: ["http://localhost:3010"]
+    owning_team: team-platform
+    topic_prefix: "*.*.erp.platform"
+    health_endpoint: "http://erp-platform:8091/healthz"
+    slo_targets:
+      availability: 99.99
+      latency_p95_ms: 500
+      error_rate_pct: 0.01
+
+  - name: ERP-Projects
+    frontend_urls: ["http://localhost:5189"]
+    owning_team: team-projects
+    topic_prefix: "*.*.erp.projects"
+    health_endpoint: "http://erp-projects:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-SCM
+    frontend_urls: ["http://localhost:5190"]
+    owning_team: team-scm
+    topic_prefix: "*.*.erp.scm"
+    health_endpoint: "http://erp-scm:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-School-Management
+    frontend_urls: ["http://localhost:5194"]
+    owning_team: team-school-management
+    topic_prefix: "*.*.erp.school-management"
+    health_endpoint: "http://erp-school-management:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-Web-Hosting
+    frontend_urls: ["http://localhost:5196"]
+    owning_team: team-web-hosting
+    topic_prefix: "*.*.erp.web-hosting"
+    health_endpoint: "http://erp-web-hosting:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 1000
+      error_rate_pct: 0.05
+
+  - name: ERP-Workspace
+    frontend_urls: ["http://localhost:5191"]
+    owning_team: team-workspace
+    topic_prefix: "*.*.erp.workspace"
+    health_endpoint: "http://erp-workspace:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-eCommerce
+    frontend_urls: ["http://localhost:5192"]
+    owning_team: team-ecommerce
+    topic_prefix: "*.*.erp.ecommerce"
+    health_endpoint: "http://erp-ecommerce:8090/healthz"
+    slo_targets:
+      availability: 99.95
+      latency_p95_ms: 1000
+      error_rate_pct: 0.05
+
+  - name: ERP-iPaaS
+    frontend_urls: ["http://localhost:5193"]
+    owning_team: team-ipaas
+    topic_prefix: "*.*.erp.ipaas"
+    health_endpoint: "http://erp-ipaas:8090/healthz"
+    slo_targets:
+      availability: 99.9
+      latency_p95_ms: 2000
+      error_rate_pct: 0.1
+
+  - name: ERP-MessageBus
+    frontend_urls: ["http://localhost:8080"]
+    owning_team: team-infra
+    topic_prefix: "*.*.erp.messagebus"
+    health_endpoint: "http://redpanda:9644/v1/status/ready"
+    slo_targets:
+      availability: 99.99
+      latency_p95_ms: 50
+      error_rate_pct: 0.01
+
+  - name: shared-infra
+    frontend_urls: []
+    owning_team: team-infra
+    topic_prefix: null
+    health_endpoint: null
+    slo_targets:
+      availability: 99.99
+      latency_p95_ms: 100
+      error_rate_pct: 0.01

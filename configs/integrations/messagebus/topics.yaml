@@ -1,0 +1,34 @@
+# AIOps message bus integration — topics consumed and produced
+module: ERP-AIOps
+consumer_groups:
+  - cg.${ENV}.${ORG}.aiops.health-ingestion
+  - cg.${ENV}.${ORG}.aiops.alert-processor
+  - cg.${ENV}.${ORG}.aiops.incident-correlator
+  - cg.${ENV}.${ORG}.aiops.audit-writer
+
+topics_consumed:
+  # Health heartbeats from all modules
+  - pattern: "${ENV}.${ORG}.erp.*.health.heartbeat"
+    purpose: "Module health monitoring"
+
+  # All module events for anomaly detection
+  - pattern: "${ENV}.${ORG}.erp.*"
+    purpose: "Cross-module event correlation"
+
+  # Observability data
+  - pattern: "${ENV}.${ORG}.erp.observability.*"
+    purpose: "Log/metric/trace anomaly detection"
+
+topics_produced:
+  - name: "${ENV}.${ORG}.erp.aiops.health.heartbeat"
+    purpose: "AIOps own health signal"
+  - name: "${ENV}.${ORG}.erp.aiops.alerts.created"
+    purpose: "Alert notifications to all modules"
+  - name: "${ENV}.${ORG}.erp.aiops.incidents.created"
+    purpose: "Incident lifecycle events"
+  - name: "${ENV}.${ORG}.erp.aiops.remediation.requested"
+    purpose: "Remediation requests"
+  - name: "${ENV}.${ORG}.erp.aiops.remediation.executed"
+    purpose: "Remediation execution results"
+  - name: "${ENV}.${ORG}.erp.aiops.audit.actions"
+    purpose: "Immutable audit trail"
