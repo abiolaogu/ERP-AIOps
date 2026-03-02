@@ -1,9 +1,0 @@
-[package]
-name = "aidd-guardrail"
-version = "0.1.0"
-edition = "2021"
-license = "Apache-2.0"
-description = "AIDD guardrail policy runtime for sovereign SaaS controls"
-
-[dependencies]
-serde = { version = "1", features = ["derive"] }

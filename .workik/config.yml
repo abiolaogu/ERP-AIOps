@@ -1,86 +1,21 @@
 version: 2
 project:
   name: ERP-AIOps
-  repositoryRoot: .
-
-standards:
-  frontend:
-    framework: nextjs16
-    ui: shadcn
-    styling: tailwindcss-v4
-    structure:
-      - app
-      - features
-      - core
-      - ui
-      - lib
-  backend:
-    apiGateway: wundergraph-cosmo
-    dataEngine: hasura-ddn
-    database: yugabytedb
-  messaging:
-    backbone: redpanda
-    cdc: redpanda-connect
-    realtime: centrifugo
-  cache:
-    engine: dragonflydb
-
-sharedInfra:
-  hasura:
-    graphqlEndpointEnv: ERP_SHARED_HASURA_URL
-    defaultGraphqlEndpoint: http://localhost:8088/v1/graphql
-    wsEndpointEnv: ERP_SHARED_HASURA_WS_URL
-    defaultWsEndpoint: ws://localhost:8088/v1/graphql
-    migrationsDir: hasura/migrations
-    metadataDir: hasura/metadata
-  dbaas:
-    postgresUrlEnv: ERP_SHARED_DB_URL
-    defaultPostgresUrl: postgresql://yugabyte:yugabyte@localhost:5433/erp_primary
-  iam:
-    baseUrlEnv: ERP_SHARED_IAM_URL
-    defaultBaseUrl: http://localhost:8081
-  observability:
-    otlpEndpointEnv: ERP_SHARED_OTLP_ENDPOINT
-    defaultOtlpEndpoint: http://localhost:4317
-  eventMesh:
-    brokersEnv: ERP_SHARED_REDPANDA_BROKERS
-    defaultBrokers: localhost:9092
-    topicPrefix: erp.updates
-
-automation:
-  fullstackScaffold:
-    command: workik scaffold fullstack --frontend nextjs16 --ui shadcn --backend node --name aiops
-    output:
-      - apps/sovereign-next16
-      - features
-      - core
-      - ui
-      - lib
-  hasuraMigrations:
-    command: workik hasura migrate --config hasura/config.yaml --apply
-    output:
-      - hasura/migrations
-      - hasura/metadata
-  devops:
-    dockerfileCommand: workik devops dockerfile --target sovereign-shared-infra
-    k8sCommand: workik devops k8s --target sovereign-shared-infra
-    output:
-      - deploy/k8s
-      - Dockerfile
-  contextAwareDebugging:
-    repositoryMap:
-      frontend:
-        - apps/sovereign-next16
-        - app
-        - features
-        - core
-        - ui
-      backend:
-        - services
-        - apps
-        - src
-      infra:
-        - infra
-        - hasura
-        - k8s
-        - deploy
+  module: aiops
+stack:
+  frontend: nextjs16
+  ui: shadcn
+  styling: tailwind-v4
+  architecture: workik-feature-slices
+contracts:
+  api: cosmo-graphql
+  realtime: centrifugo
+  auth: authentik-oidc
+  objectStorage: rustfs-s3
+  events: redpanda
+featureSlices:
+  - name: control-center
+    paths:
+      services: src/features/control-center/services
+      hooks: src/features/control-center/hooks
+      ui: src/features/control-center/ui

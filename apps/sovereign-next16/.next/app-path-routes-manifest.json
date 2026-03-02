@@ -1,7 +1,0 @@
-{
-  "/(erp)/inventory/page": "/inventory",
-  "/(erp)/page": "/",
-  "/_global-error/page": "/_global-error",
-  "/_not-found/page": "/_not-found",
-  "/page": "/"
-}

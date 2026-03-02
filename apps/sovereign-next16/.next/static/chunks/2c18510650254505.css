@@ -1,1 +1,0 @@
-:root{--bg:#f8fafc;--panel:#fff;--text:#0f172a;--muted:#475569;--primary:#0f766e;--primary-foreground:#f8fafc;--border:#e2e8f0}*{box-sizing:border-box}html,body{background:radial-gradient(circle at top right,#ccfbf1,var(--bg)38%);min-height:100%;color:var(--text);margin:0;font-family:IBM Plex Sans,Segoe UI,sans-serif}

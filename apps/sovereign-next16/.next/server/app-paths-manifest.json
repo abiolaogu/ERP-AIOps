@@ -1,7 +1,0 @@
-{
-  "/(erp)/inventory/page": "app/(erp)/inventory/page.js",
-  "/(erp)/page": "app/(erp)/page.js",
-  "/_global-error/page": "app/_global-error/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js"
-}
