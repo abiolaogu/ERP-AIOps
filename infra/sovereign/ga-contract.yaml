@@ -1,0 +1,45 @@
+apiVersion: sovereign.billyronks/v1
+kind: GATargetContract
+metadata:
+  name: erp-aiops
+  generatedAt: "2026-02-28"
+spec:
+  category: "AIOps Automation"
+  benchmarks:
+    - "Dynatrace"
+    - "Datadog"
+    - "PagerDuty"
+  northStar: "Move from reactive incident response to proactive reliability autopilot."
+  tenancy:
+    model: hard-multi-tenant
+    db:
+      engine: yugabytedb
+      isolation: rls-plus-tenant-context
+    cache:
+      engine: dragonflydb
+      namespacePattern: tenant:{tenant_id}:*
+    events:
+      broker: redpanda
+      topicPattern: tenant.{tenant_id}.{domain}.*
+      requiredTopics:
+        - "incidents.events"
+        - "anomalies.events"
+        - "remediation.actions"
+    realtime:
+      engine: centrifugo
+      channelPattern: tenant:{tenant_id}:{resource}
+  reliability:
+    availability: "99.95%"
+    p95LatencyMs: 180
+    mttrMinutes: 15
+  releaseGates:
+    - lint
+    - test
+    - build
+    - policy-check
+    - security-scan
+    - deployment-verification
+  operations:
+    runbooksRequired: true
+    rollbackWindowMinutes: 15
+    gameDayRequired: true

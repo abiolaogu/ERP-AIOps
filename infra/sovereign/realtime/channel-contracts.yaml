@@ -1,0 +1,21 @@
+apiVersion: centrifugo.billyronks/v1
+kind: ChannelContractSet
+metadata:
+  name: erp-aiops-channels
+  generatedAt: "2026-02-28"
+spec:
+  channelPattern: tenant:{tenant_id}:{resource}
+  authClaims:
+    - tenant_id
+    - role
+    - scope
+  channels:
+    - name: incidents:events
+      subscribeRole: tenant_user
+      publishRole: service_account
+    - name: anomalies:events
+      subscribeRole: tenant_user
+      publishRole: service_account
+    - name: remediation:actions
+      subscribeRole: tenant_user
+      publishRole: service_account

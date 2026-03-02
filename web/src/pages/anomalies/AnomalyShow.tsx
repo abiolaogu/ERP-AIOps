@@ -99,7 +99,7 @@ export const AnomalyShow: React.FC = () => {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Space direction="vertical" size={16} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={16} style={{ width: "100%" }}>
             <Card size="small" bordered={false}>
               <Statistic
                 title="Expected Value"
