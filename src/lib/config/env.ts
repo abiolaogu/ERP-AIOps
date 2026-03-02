@@ -8,9 +8,8 @@ export const env = {
     "http://localhost:8000/connection/websocket",
   defaultTenant: process.env.NEXT_PUBLIC_DEFAULT_TENANT ?? "tenant-default",
   authPolicy: process.env.NEXT_PUBLIC_AUTH_POLICY ?? "dev-token-fallback",
-  prefillEmail: process.env.NEXT_PUBLIC_LOGIN_PREFILL_EMAIL ?? "admin.com",
-  prefillPassword:
-    process.env.NEXT_PUBLIC_LOGIN_PREFILL_PASSWORD ?? "password",
+  prefillEmail: process.env.NEXT_PUBLIC_LOGIN_PREFILL_EMAIL ?? "admin@erp.com",
+  prefillPassword: process.env.NEXT_PUBLIC_LOGIN_PREFILL_PASSWORD ?? "password",
   authentikIssuer:
     process.env.AUTHENTIK_ISSUER_URL ??
     "http://localhost:9000/application/o/erp/",

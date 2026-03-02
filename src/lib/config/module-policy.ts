@@ -5,5 +5,5 @@ export const modulePolicy = {
   slug: "aiops",
   authPolicy: env.authPolicy as AuthPolicy,
   notes: "",
-  altUrls: "none",
+  altUrls: "",
 };

@@ -7,11 +7,7 @@ export const metadata: Metadata = {
   description: "Sovereign ERP 2026 frontend module",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>

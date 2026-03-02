@@ -20,7 +20,7 @@ export default function LoginPage() {
     if (modulePolicy.authPolicy === "dev-token-fallback") {
       return "Use Dev Token";
     }
-    return ""
+    return "";
   }, []);
 
   const onFallback = () => {

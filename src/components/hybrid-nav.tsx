@@ -69,7 +69,7 @@ export function HybridNavLayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-semibold">Sovereign ERP</span>
           </div>
           <p className="hidden text-sm text-[var(--muted-foreground)] md:block">
-            Next.js 16 + Shadcn + Workik feature slices
+            Next.js 16 with Workik feature slices and hybrid navigation.
           </p>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>

@@ -9,7 +9,7 @@ Sovereign ERP 2026 module frontend.
 - Auth policy: dev-token-fallback
 
 ```bash
-npm install
+npm install --no-audit --no-fund
 npm run dev
 npm run typecheck
 npm run build
@@ -18,9 +18,10 @@ npm run build
 ## Architecture
 
 - Next.js 16 App Router + TypeScript
-- Shadcn UI primitives + Tailwind CSS v4
+- Shadcn-style primitives + Tailwind CSS v4
 - Workik feature slices under `src/features/*`
-- TanStack Query (`staleTime` 5 minutes)
+- TanStack Query default staleTime of 5 minutes
 - Realtime invalidation via Centrifugo topic:
-  `${NEXT_PUBLIC_ENV}.${NEXT_PUBLIC_ORG}.${NEXT_PUBLIC_MODULE}.${tenant}.ui.invalidate`
-- OIDC via ERP-IAM (Authentik) with optional fallback policy per module
+  `${NEXT_PUBLIC_ENV}.${NEXT_PUBLIC_ORG}.${NEXT_PUBLIC_MODULE}.
+  ${tenant}.ui.invalidate`
+- OIDC via ERP-IAM (Authentik) with fallback policy based on module requirements

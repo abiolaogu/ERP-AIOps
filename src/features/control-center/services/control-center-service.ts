@@ -35,7 +35,7 @@ export class ControlCenterService {
         return data.control_center_cards;
       }
     } catch {
-      // Fall through to deterministic local placeholders when shared APIs are unavailable.
+      // fallback to deterministic local placeholders when shared APIs are unavailable.
     }
 
     return [
