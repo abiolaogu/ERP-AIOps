@@ -1,36 +1,33 @@
-# AIOps Integration — ERP-AIOps
+# AIOps Integration
 
-## Module Info
+This module is monitored by the shared ERP-AIOps platform.
 
-- **Module**: ERP-AIOps
-- **Frontend URL**: http://localhost:5179
-- **Topic Prefix**: `*.*.erp.aiops.*`
-- **Consumer Group Pattern**: `cg.[env].[org].aiops.[service]`
+## Signals Emitted
 
-## Heartbeat
+| Signal | Topic | Description |
+|--------|-------|-------------|
+| Health heartbeat | `[env].[org].erp.aiops.health` | 30s interval liveness/readiness |
+| Error events | `[env].[org].erp.aiops.errors` | Application-level errors |
+| Metric snapshots | `[env].[org].erp.aiops.metrics` | Key business/operational metrics |
 
-ERP-AIOps publishes its own health heartbeat to `*.*.erp.aiops.health.heartbeat`.
+## AIOps Capabilities Available
 
-## Event Format
+- Anomaly detection on module metrics
+- SLO tracking (availability, latency, error rate)
+- Automated incident creation on threshold breach
+- Autonomous remediation (pod restart, cache clear) within guardrail bounds
+- Escalation via notification channels
 
-```json
-{
-  "envelope": {
-    "env": "dev",
-    "org": "abiola",
-    "platform": "erp",
-    "app": "aiops",
-    "tenant": "system",
-    "entity": "health",
-    "event": "heartbeat",
-    "event_id": "uuid",
-    "occurred_at": "2026-03-02T00:00:00Z",
-    "schema_version": "1.0",
-    "producer": "svc-erp-aiops"
-  }
-}
-```
+## Guardrail Tiers
 
-## Dev-Token Fallback
+| Tier | Risk | Actions | Approval |
+|------|------|---------|----------|
+| Autonomous | ≤ 3 | restart_pod, clear_cache, create_incident | None |
+| Supervised | ≤ 7 | scale_horizontally, config_change, rollback | 1 approval |
+| Protected | ≤ 10 | failover, schema_change, cross_module | 2 approvals |
 
-When `NEXT_PUBLIC_AUTH_POLICY=dev-token-fallback`, AIOps UI uses prefilled credentials for local development.
+## Integration Contract
+
+- Module registry: `ERP-AIOps/configs/modules/registry.yaml`
+- Runbooks: `ERP-AIOps/configs/runbooks/`
+- Standards: `ERP-AIOps/docs/aiops-standards.md`
