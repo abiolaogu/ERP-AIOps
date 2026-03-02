@@ -1,0 +1,20 @@
+# Runbook: Clear DragonflyDB cache
+name: cache-clear
+description: "Flush cache when memory pressure exceeds 90%"
+tier: autonomous
+auto_execute: true
+trigger:
+  condition: "cache_memory_pct > 90"
+  source: "operational_metrics"
+steps:
+  - action: clear_cache
+    target: "dragonflydb"
+    timeout: 30s
+  - action: verify_metric
+    metric: "cache_memory_pct"
+    expected: "< 50"
+    timeout: 60s
+rollback:
+  - action: send_notification
+    channel: "ops"
+    message: "Cache clear did not reduce memory pressure"

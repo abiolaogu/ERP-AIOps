@@ -1,0 +1,20 @@
+# Runbook: Restart unhealthy pod
+name: pod-restart
+description: "Restart a pod that has failed health checks for >5 minutes"
+tier: autonomous
+auto_execute: true
+trigger:
+  condition: "module_health_status == 'critical' AND duration > 5m"
+  source: "health.heartbeat"
+steps:
+  - action: restart_pod
+    target: "${affected_module}"
+    timeout: 60s
+  - action: verify_health
+    target: "${affected_module}"
+    timeout: 120s
+    on_failure: escalate
+rollback:
+  - action: create_incident
+    severity: critical
+    description: "Pod restart failed for ${affected_module}"
