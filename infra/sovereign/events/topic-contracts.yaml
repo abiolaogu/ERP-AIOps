@@ -1,0 +1,183 @@
+apiVersion: redpanda.vectorized.io/v1alpha1
+kind: TopicContractSet
+metadata:
+  name: erp-aiops-topics
+  generatedAt: "2026-02-28"
+spec:
+  broker: redpanda
+  envelope:
+    required:
+      - event_id
+      - tenant_id
+      - event_type
+      - occurred_at
+      - producer
+      - schema_version
+  topics:
+    - name: incidents.events
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/incidents_events.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "incidents.events.dlq"
+        dlqRetentionMs: 2592000000
+    - name: anomalies.events
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/anomalies_events.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "anomalies.events.dlq"
+        dlqRetentionMs: 2592000000
+    - name: remediation.actions
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/remediation_actions.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "remediation.actions.dlq"
+        dlqRetentionMs: 2592000000
+
+    # ── AIOps Cross-Module Topics ──
+
+    - name: aiops.module.health
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/aiops_module_health.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "aiops.module.health.dlq"
+        dlqRetentionMs: 2592000000
+
+    - name: aiops.alerts
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/aiops_alerts.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "aiops.alerts.dlq"
+        dlqRetentionMs: 2592000000
+
+    - name: aiops.guardrail.audit
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/aiops_guardrail_audit.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "aiops.guardrail.audit.dlq"
+        dlqRetentionMs: 2592000000
+
+    - name: aiops.slo.status
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/aiops_slo_status.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "aiops.slo.status.dlq"
+        dlqRetentionMs: 2592000000
+
+    - name: aiops.commands
+      partitions: 12
+      replicationFactor: 3
+      retentionMs: 604800000
+      cleanupPolicy: compact,delete
+      schemaRef: contracts/aiops_commands.avsc
+      compaction:
+        enabled: true
+        minCleanableDirtyRatio: 0.5
+        deleteRetentionMs: 86400000
+      tieredStorage:
+        enabled: true
+        localRetentionMs: 86400000
+        remoteRetentionMs: 2592000000
+      dlq:
+        enabled: true
+        maxRetries: 3
+        retryBackoffMs: [1000, 10000, 60000]
+        dlqTopic: "aiops.commands.dlq"
+        dlqRetentionMs: 2592000000

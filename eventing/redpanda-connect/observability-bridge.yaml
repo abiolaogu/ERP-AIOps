@@ -1,0 +1,81 @@
+# Observability Bridge Pipeline
+# Consumes logs, metrics, and traces from Observability module
+# Filters for error-level logs and anomalous metrics
+# Forwards to AIOps ingestion for correlation
+
+input:
+  kafka:
+    addresses:
+      - "${REDPANDA_BROKERS:-redpanda:9092}"
+    topics:
+      - "observability.logs"
+      - "observability.metrics"
+      - "observability.traces"
+    consumer_group: "aiops-observability-bridge"
+    start_from_oldest: false
+    tls:
+      enabled: "${REDPANDA_TLS_ENABLED:-false}"
+    sasl:
+      mechanism: "${REDPANDA_SASL_MECHANISM:-SCRAM-SHA-256}"
+      user: "${REDPANDA_SASL_USER:-erp-aiops-svc}"
+      password: "${REDPANDA_SASL_PASSWORD:-}"
+
+pipeline:
+  processors:
+    # Tag with source topic
+    - bloblang: |
+        root = this
+        meta source_topic = meta("kafka_topic")
+
+    # Filter: only error-level logs and anomalous metrics
+    - switch:
+        - check: meta("source_topic") == "observability.logs"
+          processors:
+            - bloblang: |
+                root = if this.level == "error" || this.level == "fatal" || this.level == "critical" {
+                  this
+                } else {
+                  deleted()
+                }
+
+        - check: meta("source_topic") == "observability.metrics"
+          processors:
+            - bloblang: |
+                root = if this.anomalous == true || (this.value != null && this.threshold != null && this.value > this.threshold) {
+                  this
+                } else {
+                  deleted()
+                }
+
+        - check: meta("source_topic") == "observability.traces"
+          processors:
+            - bloblang: |
+                root = if this.status_code == "ERROR" || (this.duration_ms != null && this.duration_ms > 5000) {
+                  this
+                } else {
+                  deleted()
+                }
+
+    # Transform to AIOps observability ingest format
+    - bloblang: |
+        let topic = meta("source_topic")
+        root.source = $topic.trim_prefix("observability.")
+        root.data_type = match $topic {
+          "observability.logs" => "error_log",
+          "observability.metrics" => "anomalous_metric",
+          "observability.traces" => "error_trace",
+          _ => "unknown"
+        }
+        root.payload = this
+        root.tenant_id = this.tenant_id | "default"
+
+output:
+  http_client:
+    url: "${RUST_API_URL:-http://rust-api:8080}/api/v1/ingest/observability"
+    verb: POST
+    headers:
+      Content-Type: application/json
+      X-Tenant-ID: "${! this.tenant_id }"
+    max_in_flight: 32
+    retries: 3
+    retry_period: "1s"

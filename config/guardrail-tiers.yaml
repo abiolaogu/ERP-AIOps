@@ -1,0 +1,59 @@
+# AIDD Guardrail Tier Configuration
+# Defines risk tiers, allowed actions, and approval requirements
+
+tiers:
+  autonomous:
+    description: "Low-risk operations that can be executed without human approval"
+    max_risk_score: 3
+    requires_approval: false
+    approval_count: 0
+    timeout_minutes: 0
+    allowed_actions:
+      - restart_pod
+      - clear_cache
+      - flush_queue
+      - scale_up_by_one
+      - toggle_circuit_breaker
+      - create_incident
+      - send_notification
+
+  supervised:
+    description: "Medium-risk operations requiring one human approval"
+    max_risk_score: 7
+    requires_approval: true
+    approval_count: 1
+    timeout_minutes: 30
+    allowed_actions:
+      - scale_horizontally
+      - config_change
+      - db_pool_resize
+      - toggle_feature_flag
+      - rollback_deployment
+
+  protected:
+    description: "High-risk operations requiring two approvals with extended timeout"
+    max_risk_score: 10
+    requires_approval: true
+    approval_count: 2
+    timeout_minutes: 60
+    allowed_actions:
+      - failover_primary
+      - data_migration
+      - schema_change
+      - destroy_resources
+      - cross_module_remediation
+      - db_failover
+
+escalation_rules:
+  # Cross-module operations always escalate to protected tier
+  cross_module_auto_escalate: true
+  cross_module_tier: protected
+
+  # If approval times out, escalate to next tier
+  timeout_escalation: true
+
+  # Maximum consecutive autonomous actions per module per hour
+  max_autonomous_per_hour: 10
+
+  # Require cooldown between protected-tier actions
+  protected_cooldown_minutes: 15
