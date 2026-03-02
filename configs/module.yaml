@@ -1,0 +1,37 @@
+module:
+  name: ERP-AIOps
+  slug: aiops
+  version: "1.0.0"
+  stack: "next16-shadcn-tailwind4"
+  role: "aiops-platform"
+
+messaging:
+  broker: shared-redpanda
+  topics_produced:
+    - "aiops.health"
+    - "aiops.errors"
+    - "aiops.metrics"
+    - "aiops.alerts"
+    - "aiops.commands"
+    - "aiops.guardrail.audit"
+    - "aiops.slo.status"
+  topics_consumed:
+    - "aiops.alerts"
+    - "aiops.commands"
+    - "*.health"
+  consumer_group: "cg.${NEXT_PUBLIC_ENV}.${NEXT_PUBLIC_ORG}.aiops.frontend"
+
+aiops:
+  monitored: true
+  health_endpoint: "/api/health"
+  slo:
+    availability: 99.9
+    latency_p95_ms: 2000
+    error_rate_pct: 0.1
+
+dependencies:
+  required:
+    - shared-infra
+  optional:
+    - ERP-AIOps
+    - ERP-MessageBus
