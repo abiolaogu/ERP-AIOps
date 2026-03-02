@@ -1,62 +1,9 @@
-# Go
-bin/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-vendor/
-
-# Rust
-target/
-**/*.rs.bk
-Cargo.lock
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.ruff_cache/
-
-# Node.js
-node_modules/
-web/node_modules/
-web/dist/
-.npm
-*.tsbuildinfo
-
-# Environment
+.next
+node_modules
+out
 .env
 .env.local
-.env.*.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+coverage
+npm-debug.log*
 .DS_Store
-
-# Docker
-docker-compose.override.yml
-
-# Logs
-*.log
-logs/
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
+tsconfig.tsbuildinfo

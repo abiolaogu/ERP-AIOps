@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.985 0.004 264.7);
+  --foreground: oklch(0.23 0.02 264.1);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 264.3);
+  --primary: oklch(0.57 0.19 247.7);
+  --primary-foreground: oklch(0.98 0.01 247.7);
+  --muted: oklch(0.95 0.01 264.7);
+  --muted-foreground: oklch(0.45 0.02 264.1);
+  --border: oklch(0.89 0.01 264.6);
+  --ring: oklch(0.63 0.12 247.9);
+  --radius: 0.75rem;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, oklch(0.95 0.03 252.5), transparent 55%),
+    radial-gradient(circle at bottom right, oklch(0.94 0.04 198), transparent 45%),
+    var(--background);
+  color: var(--foreground);
+  font-family: "IBM Plex Sans", "Manrope", "Segoe UI", sans-serif;
+}
