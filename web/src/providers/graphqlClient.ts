@@ -1,6 +1,6 @@
 import { GraphQLClient } from "graphql-request";
 
-const HASURA_URL = import.meta.env.VITE_HASURA_URL || "http://localhost:19109/v1/graphql";
+const HASURA_URL = import.meta.env.VITE_HASURA_URL || "http://localhost:8090/v1/graphql";
 const TOKEN_KEY = "erp_aiops_auth_token";
 
 export const graphqlClient = new GraphQLClient(HASURA_URL, {
@@ -13,4 +13,4 @@ export const graphqlClient = new GraphQLClient(HASURA_URL, {
   },
 });
 
-export const HASURA_WS_URL = import.meta.env.VITE_HASURA_WS_URL || "ws://localhost:19109/v1/graphql";
+export const HASURA_WS_URL = import.meta.env.VITE_HASURA_WS_URL || "ws://localhost:8090/v1/graphql";

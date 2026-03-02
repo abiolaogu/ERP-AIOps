@@ -16,6 +16,7 @@ members = [
     "crates/opstrac-cost",
     "crates/opstrac-topology",
     "crates/opstrac-federation",
+    "crates/aidd-guardrail",
 ]
 
 [workspace.dependencies]

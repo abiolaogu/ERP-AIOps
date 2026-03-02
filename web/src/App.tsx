@@ -9,7 +9,6 @@ import { authProvider } from "@/authProvider";
 import { theme } from "@/theme";
 import { MainLayout } from "@/components/Layout/MainLayout";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const lazyNamed = (importFn: () => Promise<any>, name: string) =>
   lazy(() => importFn().then((m) => ({ default: m[name] ?? m.default })));
 
@@ -36,7 +35,7 @@ const PageLoader: React.FC = () => (
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ConfigProvider theme={theme}>
         <Refine
           routerProvider={routerBindings}

@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: erp-aiops-slo-alerts
+  labels:
+    app: erp-aiops
+spec:
+  groups:
+    - name: erp-aiops.slo
+      rules:
+        - alert: ERPAIOpsHighLatencyP95
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.180
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ERP-AIOps p95 latency is above target"
+        - alert: ERPAIOpsAvailabilityBudgetBurn
+          expr: (1 - (sum(rate(http_requests_total{status!~"5.."}[15m])) / sum(rate(http_requests_total[15m])))) > 0.000500
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ERP-AIOps error budget burn is above threshold"

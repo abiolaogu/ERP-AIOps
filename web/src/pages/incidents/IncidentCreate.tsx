@@ -59,7 +59,7 @@ export const IncidentCreate: React.FC = () => {
           initialValues={{ severity: "medium" }}
           requiredMark="optional"
         >
-          <Divider orientation="left" plain>
+          <Divider titlePlacement="start" plain>
             Incident Information
           </Divider>
           <Row gutter={16}>
@@ -96,7 +96,7 @@ export const IncidentCreate: React.FC = () => {
             </Col>
           </Row>
 
-          <Divider orientation="left" plain>
+          <Divider titlePlacement="start" plain>
             Impact & Source
           </Divider>
           <Row gutter={16}>

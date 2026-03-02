@@ -1,5 +1,5 @@
 export const API_URL =
-  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:8090/graphql";
+  import.meta.env.VITE_GRAPHQL_URL || "http://localhost:8090/v1/graphql";
 export const IAM_URL =
   import.meta.env.VITE_IAM_URL || "http://localhost:8081";
 export const GATEWAY_URL =

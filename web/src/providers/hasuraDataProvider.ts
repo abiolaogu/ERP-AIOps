@@ -232,7 +232,7 @@ export const dataProvider: DataProvider = {
   getApiUrl: () => {
     return (
       import.meta.env.VITE_HASURA_URL ||
-      "http://localhost:19109/v1/graphql"
+      "http://localhost:8090/v1/graphql"
     );
   },
 };
