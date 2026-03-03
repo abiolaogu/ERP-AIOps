@@ -1,0 +1,727 @@
+# Hasura Metadata: Database Configuration for ERP-AIOps
+# Tracks all 16 tables with tenant-aware RLS permissions.
+# aiops_audit_log is insert-only for non-admin roles (immutability).
+
+version: 3
+metadata:
+  version: 3
+  sources:
+    - name: aiops
+      kind: postgres
+      configuration:
+        connection_info:
+          database_url:
+            from_env: HASURA_GRAPHQL_DATABASE_URL
+          pool_settings:
+            max_connections: 50
+            idle_timeout: 180
+            retries: 3
+      tables:
+        # ============================================================
+        # CORE AIOPS TABLES (7)
+        # ============================================================
+        - table:
+            name: incidents
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - title
+                  - description
+                  - severity
+                  - status
+                  - source_module
+                  - source_event_id
+                  - assigned_to
+                  - escalation_policy_id
+                  - metadata
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - status
+                  - assigned_to
+                  - root_cause
+                  - resolution
+                  - acknowledged_at
+                  - resolved_at
+                  - closed_at
+                  - metadata
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          delete_permissions:
+            - role: admin
+              permission:
+                filter: {}
+          event_triggers:
+            - name: incident_created
+              definition:
+                enable_manual: false
+                insert:
+                  columns: "*"
+              retry_conf:
+                num_retries: 3
+                interval_sec: 30
+                timeout_sec: 60
+              webhook: "{{RUST_API_URL}}/api/v1/webhooks/incident-created"
+
+        - table:
+            name: anomalies
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - anomaly_type
+                  - source_module
+                  - metric_name
+                  - expected_value
+                  - actual_value
+                  - deviation_score
+                  - severity
+                  - detection_model
+                  - confidence
+                  - raw_data
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - status
+                  - correlated_incident_id
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          event_triggers:
+            - name: anomaly_detected
+              definition:
+                enable_manual: false
+                insert:
+                  columns: "*"
+              retry_conf:
+                num_retries: 3
+                interval_sec: 30
+                timeout_sec: 60
+              webhook: "{{RUST_API_URL}}/api/v1/webhooks/anomaly-detected"
+
+        - table:
+            name: topology_nodes
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - node_type
+                  - module_name
+                  - service_name
+                  - namespace
+                  - version
+                  - endpoint_url
+                  - metadata
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - health_status
+                  - version
+                  - endpoint_url
+                  - metadata
+                  - last_seen_at
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: topology_edges
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - source_node_id
+                  - target_node_id
+                  - edge_type
+                  - protocol
+                  - metadata
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - avg_latency_ms
+                  - error_rate
+                  - requests_per_sec
+                  - metadata
+                  - last_seen_at
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: correlation_rules
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: automation_playbooks
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: playbook_executions
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - playbook_id
+                  - incident_id
+                  - triggered_by
+                  - target_module
+                  - steps_total
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - status
+                  - steps_completed
+                  - current_step
+                  - error_message
+                  - completed_at
+                  - execution_duration_ms
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        # ============================================================
+        # CROSS-MODULE INTEGRATION TABLES (9)
+        # ============================================================
+        - table:
+            name: module_health_status
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - module_name
+                  - status
+                  - gateway_healthy
+                  - hasura_healthy
+                  - database_healthy
+                  - latency_p50_ms
+                  - latency_p95_ms
+                  - latency_p99_ms
+                  - error_rate
+                  - request_rate
+                  - pod_count
+                  - pod_ready_count
+                  - cpu_usage_pct
+                  - memory_usage_pct
+                  - metadata
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - status
+                  - gateway_healthy
+                  - hasura_healthy
+                  - database_healthy
+                  - latency_p50_ms
+                  - latency_p95_ms
+                  - latency_p99_ms
+                  - error_rate
+                  - request_rate
+                  - pod_count
+                  - pod_ready_count
+                  - cpu_usage_pct
+                  - memory_usage_pct
+                  - last_heartbeat_at
+                  - last_incident_at
+                  - metadata
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          event_triggers:
+            - name: health_status_changed
+              definition:
+                enable_manual: false
+                update:
+                  columns:
+                    - status
+              retry_conf:
+                num_retries: 3
+                interval_sec: 10
+                timeout_sec: 30
+              webhook: "{{RUST_API_URL}}/api/v1/webhooks/health-status-changed"
+
+        - table:
+            name: operational_metrics
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - module_name
+                  - metric_name
+                  - metric_type
+                  - value
+                  - unit
+                  - dimensions
+                  - aggregation_window
+                  - sample_count
+                  - min_value
+                  - max_value
+                  - recorded_at
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+
+        - table:
+            name: guardrail_evaluations
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - action_type
+                  - target_module
+                  - guardrail_tier
+                  - risk_score
+                  - result
+                  - requested_by
+                  - approvals_required
+                  - context
+                  - expires_at
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - result
+                  - approvals_received
+                  - approval_chain
+                  - denial_reason
+                  - resolved_at
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          event_triggers:
+            - name: guardrail_resolved
+              definition:
+                enable_manual: false
+                update:
+                  columns:
+                    - resolved_at
+              retry_conf:
+                num_retries: 3
+                interval_sec: 10
+                timeout_sec: 30
+              webhook: "{{RUST_API_URL}}/api/v1/webhooks/guardrail-resolved"
+
+        - table:
+            name: slo_tracking
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: user
+              permission:
+                columns:
+                  - current_value
+                  - status
+                  - error_budget_remaining
+                  - error_budget_burn_rate
+                  - last_evaluated_at
+                  - breached_at
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          event_triggers:
+            - name: slo_breached
+              definition:
+                enable_manual: false
+                update:
+                  columns:
+                    - status
+              retry_conf:
+                num_retries: 3
+                interval_sec: 10
+                timeout_sec: 30
+              webhook: "{{RUST_API_URL}}/api/v1/webhooks/slo-breached"
+
+        # aiops_audit_log: INSERT-ONLY for non-admin (immutability)
+        - table:
+            name: aiops_audit_log
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: user
+              permission:
+                columns:
+                  - tenant_id
+                  - action
+                  - action_category
+                  - actor
+                  - actor_type
+                  - target_type
+                  - target_id
+                  - target_module
+                  - previous_state
+                  - new_state
+                  - result
+                  - error_message
+                  - correlation_id
+                  - metadata
+                check:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          # NO update_permissions — immutable table
+          # NO delete_permissions for user role — immutable table
+
+        - table:
+            name: notification_channels
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: escalation_policies
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: maintenance_windows
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+
+        - table:
+            name: runbooks
+            schema: public
+          select_permissions:
+            - role: user
+              permission:
+                columns: "*"
+                filter:
+                  tenant_id:
+                    _eq: X-Hasura-Tenant-Id
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}
+          insert_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                check: {}
+          update_permissions:
+            - role: admin
+              permission:
+                columns: "*"
+                filter: {}

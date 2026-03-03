@@ -1,85 +1,72 @@
-# AIOps Category-King Operating Model
+# Category King Operating Model — Sovereign AIOps
 
-## Strategic Intent
+**Module:** ERP-AIOps | **Port:** 5179 | **Version:** 1.0
+**Strategy Lead:** Office of the CEO | **Date:** 2026-03-03
 
-ERP-AIOps is positioned as a category-defining Product in the Sovereign ERP System. The operating model converts strategy into execution through measurable Tenant and Org outcomes, disciplined Service delivery, and Environment-grade governance.
+---
 
-## Category Definition
+## 1. Category Definition
 
-- **Primary category claim**: the fastest, most trustworthy operating plane for AIOps workflows.
-- **Buyer outcome**: 2x decision velocity with lower governance overhead.
-- **Operator outcome**: auditable control, predictable performance, and resilient operations.
-- **Economic outcome**: stronger gross retention, expansion revenue, and faster payback.
+**New Category:** Autonomous IT Operations for ERP Platforms
 
-## Operating Model Pillars
+Sovereign AIOps creates a new category at the intersection of AIOps and enterprise ERP operations. Unlike general-purpose AIOps tools (Moogsoft, BigPanda) that treat every system equally, and unlike observability platforms (Datadog, Dynatrace) that provide data without autonomous action, Sovereign AIOps understands ERP module dependencies, business impact of service degradation, and cross-module incident correlation — enabling truly autonomous operations.
 
-| Pillar | Execution Mechanism | KPI Anchor |
-|---|---|---|
-| Workflow Superiority | opinionated workflow maps, guided automation, role-sensitive UX | cycle time reduction, task completion rate |
-| Trust by Design | policy checks, audit evidence capture, role segregation | policy violation rate, audit pass rate |
-| Economic Compounding | usage-to-value telemetry, expansion triggers, tiered packaging | NRR, expansion conversion, CAC payback |
-| Delivery Velocity | quarterly value trains, release gates, runbook discipline | release frequency, change failure rate |
-| Platform Leverage | shared API, identity, observability, and data contracts | integration lead time, incident MTTR |
+**Category POV:** "The future of IT operations is not more dashboards or better alerts — it is systems that heal themselves. Sovereign AIOps is the first platform that understands ERP business context well enough to autonomously detect, diagnose, and resolve incidents without human intervention."
 
-## Category-King Flywheel
+## 2. Lightning Strike Strategy
 
-```mermaid
-flowchart LR
-    A["Signal: Tenant behavior + Org outcomes"] --> B["Insight: bottlenecks and opportunity clusters"]
-    B --> C["Execution: feature + workflow + pricing changes"]
-    C --> D["Adoption: faster time to value"]
-    D --> E["Expansion: deeper usage and upsell"]
-    E --> F["Evidence: audit, ROI, benchmark proof"]
-    F --> A
-```
+### 2.1 Strike 1: "The End of Alert Fatigue" (Q3 2026)
+- **Message:** "95% of your alerts are noise. We eliminate them."
+- **Actions:** Publish noise reduction benchmark; customer zero case study showing alert volume reduction from 2,000/day to 100/day; SRE community blog series
 
-## 12-Month Execution Program
+### 2.2 Strike 2: "Self-Healing ERP" (Q1 2027)
+- **Message:** "60% of incidents resolved before your SRE wakes up"
+- **Actions:** Launch autonomous remediation with customer metrics; present at SREcon; publish MTTR reduction whitepaper
 
-| Quarter | Product Track | GTM Track | Platform Track | Exit Criteria |
-|---|---|---|---|---|
-| Q1 | instrument top 3 workflows | sharpen ICP and value messaging | baseline SLO and telemetry coverage | benchmark baseline approved |
-| Q2 | ship guided actions + policy UX | launch role-based onboarding plays | harden audit/event contracts | activation and trust KPIs improve |
-| Q3 | launch expansion modules | land-and-expand motion by org maturity | optimize latency + reliability budgets | NRR trend > 115% |
-| Q4 | automate decision loops | verticalized playbooks by segment | resilience drills and cost controls | board-ready efficiency metrics |
+### 2.3 Strike 3: "Predictive Operations" (Q3 2027)
+- **Message:** "We fix problems before they happen"
+- **Actions:** Launch predictive alerting; publish incident prevention metrics; Gartner analyst briefing
 
-## Governance Cadence
+## 3. Competitive Moat
 
-- **Weekly Product-System review**: backlog priorities tied to KPI deltas.
-- **Biweekly architecture and risk review**: security, reliability, and compliance drift checks.
-- **Monthly operating review**: margin quality, retention trends, and roadmap confidence.
-- **Quarterly strategy reset**: scenario planning, capital allocation, and target revisions.
+| Moat | Description | Defensibility |
+|------|-------------|--------------|
+| ERP Topology Intelligence | Understands 24-module service dependencies, business impact of each service | Very High — requires ERP domain knowledge |
+| Cross-Module Correlation | Correlates incidents across ERP modules using shared topology | High — standalone tools cannot see across modules |
+| Business Impact Scoring | Prioritizes incidents by revenue/customer impact, not just technical severity | High — requires ERP business context |
+| Autonomous Remediation Library | Pre-built runbooks tuned for ERP services with tested rollback procedures | Medium — accumulated operational knowledge |
+| Operational Data Network Effects | ML models improve with more operational data; each module added improves detection for all modules | High — compounds over time |
 
-## Board-Level Metric Stack
+## 4. Competitor Positioning
 
-| Dimension | Metric | Target Band |
-|---|---|---|
-| Adoption | feature activation depth per Tenant | >70% on critical workflow set |
-| Value | median time-to-value | <14 days enterprise onboarding |
-| Trust | critical policy violations | 0 unresolved in prod |
-| Reliability | p95 latency on critical path | <200ms |
-| Economics | CAC payback | <12 months |
-| Expansion | NRR | 115%-130% |
+| Competitor | Positioning | Sovereign AIOps Advantage |
+|-----------|-------------|--------------------------|
+| PagerDuty | Incident management and on-call | No ML detection, no auto-remediation, no ERP context |
+| Datadog | Full-stack observability | Observation not action; no autonomous remediation; expensive at scale |
+| Dynatrace | AI-powered observability | Better AI than Datadog but still observation-focused; no ERP integration |
+| Moogsoft | AIOps event correlation | No ERP context; limited remediation; company focus unclear |
+| BigPanda | Event correlation and automation | Limited ML; no ERP topology; weaker autonomous capabilities |
+| Shoreline.io | Runbook automation | Narrow focus on automation; no anomaly detection; no correlation |
 
-## Resource Allocation Rules
+## 5. Revenue Architecture
 
-1. Fund work with explicit KPI traceability and measurable owner accountability.
-2. Maintain non-negotiable trust gates: security, compliance, and reliability.
-3. Prioritize workflows that compound retention and expansion, not vanity breadth.
-4. Keep 10%-15% capacity for resilience, technical debt retirement, and runbook hardening.
+| Revenue Stream | Model | Price | Gross Margin |
+|---------------|-------|-------|-------------|
+| Per-monitored resource | Monthly per resource | $2-$8/resource/month | 75% |
+| Platform fee | Monthly subscription | $3,000-$25,000/month | 85% |
+| Premium runbooks | Per-execution or bundle | $0.10-$1.00/execution | 80% |
+| Premium support | Annual contract | $50K-$200K/year | 60% |
 
-## Operating Risks and Active Mitigations
+## 6. Category Metrics
 
-| Risk | Early Signal | Mitigation |
-|---|---|---|
-| Feature sprawl without value density | flat activation, rising support tickets | stage-gated roadmap and value scoring |
-| Governance drag | release slowdown from late control checks | policy-as-code and pre-merge control tests |
-| Scale friction | rising p95 and queue lag | capacity triggers, query budgeting, caching strategy |
-| GTM-Product disconnect | low adoption despite pipeline growth | closed-loop win/loss and usage telemetry |
+| Metric | Current | Target (12mo) | Target (24mo) |
+|--------|---------|---------------|---------------|
+| Share of Voice (AIOps + ERP) | < 1% | 5% | 12% |
+| Analyst recognition | None | "Cool Vendor" | MQ "Visionary" |
+| SRE community NPS | N/A | > 55 | > 70 |
+| Monitored resources (total) | 0 | 50,000 | 250,000 |
+| Autonomous remediations/month | 0 | 5,000 | 50,000 |
 
-## Linkage to Core Documentation
+---
 
-- [BRD](BRD.md)
-- [PRD](PRD.md)
-- [Enterprise Architecture Roadmap](EA-Roadmap.md)
-- [Project Charter](Project-Charter.md)
-- [Compliance Matrix](Compliance-Regulatory-Matrix.md)
+*Category strategy reviewed quarterly with executive team.*

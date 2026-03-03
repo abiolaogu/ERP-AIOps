@@ -1,0 +1,128 @@
+# Observability Bridge Pipeline
+# Consumes logs, metrics, and traces from ERP-Observability topics.
+# Filters for error-level logs and anomalous metrics only.
+# Forwards filtered data to AIOps ingestion for correlation and anomaly detection.
+#
+# Consumer group: aiops-observability-bridge
+
+input:
+  kafka:
+    addresses:
+      - "${REDPANDA_BROKERS:localhost:9092}"
+    topics:
+      - "${ENV:dev}.${ORG:abiola}.erp.observability.logs"
+      - "${ENV:dev}.${ORG:abiola}.erp.observability.metrics"
+      - "${ENV:dev}.${ORG:abiola}.erp.observability.traces"
+      - "${ENV:dev}.${ORG:abiola}.erp.observability.alerts"
+    consumer_group: "cg.${ENV:dev}.${ORG:abiola}.aiops.observability-bridge"
+    client_id: "aiops-observability-bridge"
+    start_from_oldest: false
+    sasl:
+      mechanism: SCRAM-SHA-256
+      user: "svc-erp-aiops"
+      password: "${REDPANDA_PASSWORD:}"
+    tls:
+      enabled: "${REDPANDA_TLS_ENABLED:false}"
+
+pipeline:
+  processors:
+    # 1. Add source metadata
+    - mapping: |
+        root = this
+        root.meta.source_topic = meta("kafka_topic")
+        root.meta.bridge_ingested_at = now()
+
+    # 2. Determine data type from topic
+    - mapping: |
+        let topic = this.meta.source_topic
+
+        root = this
+        root.meta.data_type = if $topic.contains("logs") {
+          "log"
+        } else if $topic.contains("metrics") {
+          "metric"
+        } else if $topic.contains("traces") {
+          "trace"
+        } else if $topic.contains("alerts") {
+          "alert"
+        } else {
+          "unknown"
+        }
+
+    # 3. Filter: only pass through actionable data
+    # - Logs: only error and fatal level
+    # - Metrics: only anomalous values (deviation > threshold)
+    # - Traces: only errored spans
+    # - Alerts: all firing alerts
+    - mapping: |
+        let data_type = this.meta.data_type
+        let pass = false
+
+        let pass = if $data_type == "log" {
+          let level = this.level.or(this.severity).or("info").lowercase()
+          level == "error" || level == "fatal" || level == "critical"
+        } else if $data_type == "metric" {
+          # Pass metrics that exceed normal thresholds
+          let value = this.value.or(0)
+          let threshold = this.threshold.or(this.upper_bound).or(1000000)
+          value > threshold
+        } else if $data_type == "trace" {
+          # Pass errored traces only
+          this.status.or("ok") == "error" || this.error.or(false) == true
+        } else if $data_type == "alert" {
+          # Pass all firing alerts
+          this.status.or("") == "firing"
+        } else {
+          false
+        }
+
+        root = if $pass {
+          this
+        } else {
+          deleted()
+        }
+
+    # 4. Normalize to AIOps ingestion format
+    - mapping: |
+        root = this
+        root.event_type = "observability." + this.meta.data_type
+        root.tenant_id = this.tenant_id.or("default")
+        root.module_name = this.module.or(this.service).or(this.namespace).or("unknown")
+        root.source = "observability-bridge"
+
+output:
+  http_client:
+    url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/observability"
+    verb: POST
+    headers:
+      Content-Type: application/json
+    max_in_flight: 32
+    timeout: 10s
+    retry_period: 5s
+    retries: 3
+    batching:
+      count: 50
+      period: 5s
+
+  # DLQ for failed observability bridge messages
+  fallback:
+    kafka:
+      addresses:
+        - "${REDPANDA_BROKERS:localhost:9092}"
+      topic: "${ENV:dev}.${ORG:abiola}.erp.aiops.observability-bridge.dlq"
+      client_id: "aiops-observability-bridge-dlq"
+      compression: snappy
+      sasl:
+        mechanism: SCRAM-SHA-256
+        user: "svc-erp-aiops"
+        password: "${REDPANDA_PASSWORD:}"
+      tls:
+        enabled: "${REDPANDA_TLS_ENABLED:false}"
+
+metrics:
+  prometheus:
+    prefix: "aiops_observability_bridge"
+
+logger:
+  level: INFO
+  format: json

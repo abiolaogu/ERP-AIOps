@@ -1,0 +1,207 @@
+# SLO Definitions for Sovereign ERP Platform
+# Standard SLO templates applied to all 24 modules with per-module overrides.
+# Each SLO has a Prometheus query template parameterized by ${module}.
+
+version: "1.0"
+
+# Default evaluation window for all SLOs
+default_evaluation_window: "30d"
+
+# Default error budget alerting thresholds
+error_budget_thresholds:
+  warning_pct: 30    # Alert when 30% budget remaining
+  critical_pct: 10   # Critical when 10% budget remaining
+  exhausted_pct: 0   # Incident when 0% budget remaining
+
+# Standard SLO templates
+slo_templates:
+  availability:
+    description: "Service availability measured as successful request ratio"
+    type: availability
+    unit: "percent"
+    comparison: gte
+    default_target: 99.9
+    prometheus_query: |
+      (
+        sum(rate(http_requests_total{module="${module}", status!~"5.."}[5m]))
+        /
+        sum(rate(http_requests_total{module="${module}"}[5m]))
+      ) * 100
+    error_budget_query: |
+      1 - (
+        sum(increase(http_requests_total{module="${module}", status=~"5.."}[${window}]))
+        /
+        sum(increase(http_requests_total{module="${module}"}[${window}]))
+      ) / (1 - ${target}/100)
+
+  latency_p95:
+    description: "95th percentile request latency"
+    type: latency
+    unit: "milliseconds"
+    comparison: lte
+    default_target: 2000
+    prometheus_query: |
+      histogram_quantile(0.95,
+        sum(rate(http_request_duration_seconds_bucket{module="${module}"}[5m])) by (le)
+      ) * 1000
+    error_budget_query: |
+      1 - (
+        sum(increase(http_request_duration_seconds_bucket{module="${module}", le="${target_seconds}"}[${window}]))
+        /
+        sum(increase(http_request_duration_seconds_count{module="${module}"}[${window}]))
+      )
+
+  latency_p99:
+    description: "99th percentile request latency"
+    type: latency
+    unit: "milliseconds"
+    comparison: lte
+    default_target: 5000
+    prometheus_query: |
+      histogram_quantile(0.99,
+        sum(rate(http_request_duration_seconds_bucket{module="${module}"}[5m])) by (le)
+      ) * 1000
+
+  error_rate:
+    description: "HTTP 5xx error rate as percentage of total requests"
+    type: error_rate
+    unit: "percent"
+    comparison: lte
+    default_target: 0.1
+    prometheus_query: |
+      (
+        sum(rate(http_requests_total{module="${module}", status=~"5.."}[5m]))
+        /
+        sum(rate(http_requests_total{module="${module}"}[5m]))
+      ) * 100
+
+  throughput:
+    description: "Minimum sustained request throughput"
+    type: throughput
+    unit: "requests_per_second"
+    comparison: gte
+    default_target: 10
+    prometheus_query: |
+      sum(rate(http_requests_total{module="${module}"}[5m]))
+
+  saturation_cpu:
+    description: "CPU utilization must stay below threshold"
+    type: saturation
+    unit: "percent"
+    comparison: lte
+    default_target: 80
+    prometheus_query: |
+      avg(rate(container_cpu_usage_seconds_total{namespace="erp-${module}"}[5m]))
+      /
+      avg(kube_pod_container_resource_limits{namespace="erp-${module}", resource="cpu"})
+      * 100
+
+  saturation_memory:
+    description: "Memory utilization must stay below threshold"
+    type: saturation
+    unit: "percent"
+    comparison: lte
+    default_target: 85
+    prometheus_query: |
+      avg(container_memory_working_set_bytes{namespace="erp-${module}"})
+      /
+      avg(kube_pod_container_resource_limits{namespace="erp-${module}", resource="memory"})
+      * 100
+
+# Per-module SLO overrides
+module_overrides:
+  finance:
+    availability:
+      target: 99.99
+      reason: "Financial transactions require highest availability"
+    latency_p95:
+      target: 500
+      reason: "Transaction processing must be fast"
+    error_rate:
+      target: 0.01
+      reason: "Financial errors have regulatory implications"
+
+  healthcare:
+    availability:
+      target: 99.99
+      reason: "Patient safety requires highest availability"
+    latency_p95:
+      target: 1000
+      reason: "Clinical workflows need responsive UI"
+    error_rate:
+      target: 0.01
+      reason: "Medical data errors can impact patient outcomes"
+
+  iam:
+    availability:
+      target: 99.99
+      reason: "Authentication gateway for all modules"
+    latency_p95:
+      target: 200
+      reason: "Auth latency impacts all downstream services"
+    throughput:
+      target: 100
+      reason: "Must handle burst auth requests across all modules"
+
+  commerce:
+    availability:
+      target: 99.95
+      reason: "Order processing must be highly available"
+    latency_p95:
+      target: 1000
+    error_rate:
+      target: 0.05
+
+  ecommerce:
+    availability:
+      target: 99.95
+      reason: "Storefront must be responsive for end users"
+    latency_p95:
+      target: 800
+      reason: "Consumer-facing latency impacts conversion"
+
+  platform:
+    availability:
+      target: 99.99
+      reason: "Platform services are dependencies for all modules"
+    latency_p95:
+      target: 300
+
+  observability:
+    availability:
+      target: 99.95
+    throughput:
+      target: 1000
+      reason: "Must ingest high volumes of telemetry data"
+
+  messagebus:
+    availability:
+      target: 99.99
+      reason: "Event backbone for all inter-module communication"
+    latency_p95:
+      target: 100
+      reason: "Message delivery latency affects all event-driven flows"
+
+  aiops:
+    availability:
+      target: 99.95
+    latency_p95:
+      target: 1000
+    error_rate:
+      target: 0.05
+
+  dbaas:
+    availability:
+      target: 99.99
+      reason: "Database infrastructure must be highly available"
+    latency_p95:
+      target: 500
+
+  bss-oss:
+    availability:
+      target: 99.99
+      reason: "Telecom billing cannot have downtime"
+    latency_p95:
+      target: 500
+    error_rate:
+      target: 0.01
