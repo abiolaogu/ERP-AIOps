@@ -1,0 +1,53 @@
+name: Feature Request
+
+description: Propose a new documentation feature, architecture addition, or process improvement.
+
+title: "[Feature]: "
+
+labels:
+  - enhancement
+  - docs
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem are we solving?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Explain desired behavior and affected areas.
+    validations:
+      required: true
+
+  - type: textarea
+    id: business-value
+    attributes:
+      label: Business Value
+      description: Describe measurable impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture-impact
+    attributes:
+      label: Architecture Impact
+      description: Mention expected HLD/LLD/API changes.
+
+  - type: textarea
+    id: required-doc-updates
+    attributes:
+      label: Required Doc Updates
+      description: List docs to update (PRD, SAD, runbooks, compliance matrix).
+
+  - type: textarea
+    id: adr-needed
+    attributes:
+      label: ADR Needed?
+      description: State whether an ADR is required and why.
+

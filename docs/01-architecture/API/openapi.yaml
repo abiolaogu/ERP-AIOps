@@ -1,0 +1,563 @@
+openapi: 3.0.3
+info:
+  title: Multi-Tenant SaaS Core API
+  version: 1.0.0
+  description: |
+    API contract for the Product System covering authentication, tenant and user management,
+    audit logs, billing, and notifications.
+servers:
+  - url: https://api.dev.product.example.com/v1
+    description: Development Environment
+  - url: https://api.staging.product.example.com/v1
+    description: Staging Environment
+  - url: https://api.product.example.com/v1
+    description: Production Environment
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Tenants
+  - name: Users
+  - name: Audit
+  - name: Billing
+  - name: Notifications
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Authenticate a User or Admin and return JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              adminLogin:
+                value:
+                  email: admin@acme.example
+                  password: StrongPassword!2026
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+              examples:
+                tokenPair:
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    refresh_token: rfr_01HZX...
+                    token_type: Bearer
+                    expires_in: 900
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Refresh an access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants visible to the authenticated Admin
+      responses:
+        '200':
+          description: Tenant list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+    post:
+      tags: [Tenants]
+      summary: Create a new Tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, org_name, admin_email]
+              properties:
+                name:
+                  type: string
+                org_name:
+                  type: string
+                admin_email:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /tenants/{tenantId}:
+    get:
+      tags: [Tenants]
+      summary: Get Tenant details
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /tenants/{tenantId}/users:
+    get:
+      tags: [Users]
+      summary: List Users for a Tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Create a User in a Tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, display_name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                display_name:
+                  type: string
+                org_id:
+                  type: string
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /tenants/{tenantId}/users/{userId}/roles:
+    patch:
+      tags: [Users]
+      summary: Assign role to User
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentRequest'
+            examples:
+              assignFinance:
+                value:
+                  role_id: finance_manager
+                  org_id: org_001
+                  reason: Month end billing operations
+      responses:
+        '200':
+          description: Role assignment result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: assigned
+                  assignment_id:
+                    type: string
+                    example: urbind_0142
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /tenants/{tenantId}/audit-logs:
+    get:
+      tags: [Audit]
+      summary: Query audit logs
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: actor_user_id
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLogEntry'
+
+  /tenants/{tenantId}/billing/summary:
+    get:
+      tags: [Billing]
+      summary: Get billing summary for Tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      responses:
+        '200':
+          description: Billing summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSummary'
+
+  /tenants/{tenantId}/billing/charges:
+    post:
+      tags: [Billing]
+      summary: Create a billing charge
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingChargeRequest'
+            examples:
+              monthlyCharge:
+                value:
+                  amount: 2499.00
+                  currency: USD
+                  description: Enterprise monthly subscription
+      responses:
+        '202':
+          description: Charge accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  charge_id:
+                    type: string
+                    example: chg_00034
+                  status:
+                    type: string
+                    example: pending
+
+  /tenants/{tenantId}/notifications:
+    post:
+      tags: [Notifications]
+      summary: Send notification to tenant channel
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '202':
+          description: Notification queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification_id:
+                    type: string
+                    example: nfy_9881
+                  status:
+                    type: string
+                    example: queued
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Tenant identifier
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: User identifier
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 900
+
+    Tenant:
+      type: object
+      required: [id, name, status, created_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, archived]
+        created_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      required: [id, tenant_id, email, status]
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        org_id:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+        status:
+          type: string
+          enum: [active, invited, suspended]
+
+    RoleAssignmentRequest:
+      type: object
+      required: [role_id]
+      properties:
+        role_id:
+          type: string
+        org_id:
+          type: string
+          nullable: true
+        reason:
+          type: string
+
+    AuditLogEntry:
+      type: object
+      required:
+        [event_id, tenant_id, actor_user_id, action, target_type, target_id, occurred_at, environment]
+      properties:
+        event_id:
+          type: string
+        tenant_id:
+          type: string
+        actor_user_id:
+          type: string
+        action:
+          type: string
+        target_type:
+          type: string
+        target_id:
+          type: string
+        environment:
+          type: string
+          enum: [dev, staging, prod]
+        occurred_at:
+          type: string
+          format: date-time
+
+    BillingSummary:
+      type: object
+      required: [tenant_id, plan_code, usage_total, current_balance]
+      properties:
+        tenant_id:
+          type: string
+        plan_code:
+          type: string
+        usage_total:
+          type: number
+          format: double
+        current_balance:
+          type: number
+          format: double
+        currency:
+          type: string
+          example: USD
+
+    BillingChargeRequest:
+      type: object
+      required: [amount, currency, description]
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        description:
+          type: string
+
+    NotificationRequest:
+      type: object
+      required: [channel, subject, body]
+      properties:
+        channel:
+          type: string
+          enum: [email, webhook, in_app]
+        subject:
+          type: string
+        body:
+          type: string
+        recipient:
+          type: string
+          description: Email address, webhook URL, or user identifier
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            trace_id:
+              type: string
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized:
+              value:
+                error:
+                  code: AUTH_UNAUTHORIZED
+                  message: Invalid credentials or token
+                  trace_id: trc_001
+
+    ForbiddenError:
+      description: Authorization denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden:
+              value:
+                error:
+                  code: AUTH_FORBIDDEN
+                  message: Role does not allow this action
+                  trace_id: trc_002
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            notFound:
+              value:
+                error:
+                  code: RESOURCE_NOT_FOUND
+                  message: Requested entity was not found
+                  trace_id: trc_003

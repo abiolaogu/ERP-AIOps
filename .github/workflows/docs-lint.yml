@@ -1,0 +1,44 @@
+name: Docs Lint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/**'
+      - 'docs/01-architecture/API/openapi.yaml'
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/**'
+      - 'docs/01-architecture/API/openapi.yaml'
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install linters
+        run: |
+          npm init -y
+          npm install --save-dev markdownlint-cli2 markdown-link-check @redocly/cli
+
+      - name: Markdown lint
+        run: npx markdownlint-cli2
+
+      - name: Link check
+        run: |
+          find docs -name "*.md" -print0 | xargs -0 -n1 -P4 npx markdown-link-check -q -c .markdown-link-check.json
+          npx markdown-link-check -q -c .markdown-link-check.json README.md
+
+      - name: OpenAPI lint
+        run: npx redocly lint docs/01-architecture/API/openapi.yaml

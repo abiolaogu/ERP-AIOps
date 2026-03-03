@@ -25,3 +25,8 @@ npm run build
   `${NEXT_PUBLIC_ENV}.${NEXT_PUBLIC_ORG}.${NEXT_PUBLIC_MODULE}.
   ${tenant}.ui.invalidate`
 - OIDC via ERP-IAM (Authentik) with fallback policy based on module requirements
+
+## Documentation Index
+- Start here: [docs/README.md](./docs/README.md)
+- Architecture: [docs/01-architecture/SAD.md](./docs/01-architecture/SAD.md)
+- DevOps and quality: [docs/03-quality-devops/CI-CD.md](./docs/03-quality-devops/CI-CD.md)

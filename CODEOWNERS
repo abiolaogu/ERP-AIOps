@@ -1,0 +1,23 @@
+# Global defaults
+* @org/platform-leads @org/product-docs
+
+# Strategy and product docs
+/docs/00-project-strategy/ @org/product-managers @org/enterprise-architecture
+
+# Architecture and API docs
+/docs/01-architecture/ @org/architecture-board @org/security-architects
+/docs/01-architecture/API/ @org/backend-leads @org/api-governance
+
+# Developer and ADR docs
+/docs/02-developer-onboarding/ @org/engineering-enablement
+/docs/02-developer-onboarding/ADR/ @org/architecture-board
+
+# Quality and operations docs
+/docs/03-quality-devops/ @org/platform-leads @org/sre-team
+/docs/04-user-ops/ @org/customer-success @org/operations-team
+
+# Design and UX prompts
+/docs/05-figma-make-prompts/ @org/design-systems @org/product-design
+
+# GitHub workflow and templates
+/.github/ @org/platform-leads
