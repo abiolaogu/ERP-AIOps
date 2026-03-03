@@ -1,0 +1,176 @@
+# AIOps Central Ingestion Pipeline
+# Redpanda Connect pipeline consuming events from all 24 module topic prefixes
+# plus the aiops.module.health heartbeat topic.
+#
+# Categorizes events and forwards to Rust API ingestion endpoints.
+# Consumer group: aiops-central-ingestion
+
+input:
+  kafka:
+    addresses:
+      - "${REDPANDA_BROKERS:localhost:9092}"
+    topics:
+      # All module event prefixes
+      - "${ENV:dev}.${ORG:abiola}.erp.finance.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.healthcare.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.iam.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.crm.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.hcm.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.commerce.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.ecommerce.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.scm.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.bi.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.ai.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.platform.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.marketing.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.projects.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.workspace.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.observability.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.bss-oss.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.dbaas.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.ipaas.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.church-management.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.school-management.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.web-hosting.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.autonomous-coding.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.assistant.*"
+      - "${ENV:dev}.${ORG:abiola}.erp.messagebus.*"
+      # AIOps health heartbeat topic
+      - "${ENV:dev}.${ORG:abiola}.erp.aiops.module.health"
+    consumer_group: "cg.${ENV:dev}.${ORG:abiola}.aiops.central-ingestion"
+    client_id: "aiops-central-ingestion"
+    start_from_oldest: false
+    sasl:
+      mechanism: SCRAM-SHA-256
+      user: "svc-erp-aiops"
+      password: "${REDPANDA_PASSWORD:}"
+    tls:
+      enabled: "${REDPANDA_TLS_ENABLED:false}"
+
+pipeline:
+  processors:
+    # 1. Validate envelope structure
+    - mapping: |
+        root = this
+        root.meta.source_topic = meta("kafka_topic")
+        root.meta.source_partition = meta("kafka_partition")
+        root.meta.source_offset = meta("kafka_offset")
+        root.meta.ingested_at = now()
+
+    # 2. Categorize event by topic pattern
+    - mapping: |
+        let topic = this.meta.source_topic
+
+        root = this
+
+        root.meta.category = if $topic.contains("module.health") {
+          "health"
+        } else if $topic.contains("incident") || this.event_type.or("").contains("incident") {
+          "incident"
+        } else if $topic.contains("metric") || this.event_type.or("").contains("metric") {
+          "metric"
+        } else if $topic.contains("observability") {
+          "observability"
+        } else {
+          "event"
+        }
+
+    # 3. Enrich with source module name extracted from topic
+    - mapping: |
+        let topic = this.meta.source_topic
+        let parts = $topic.split(".")
+
+        root = this
+        # Topic format: env.org.erp.module.event_name
+        # Module is at index 3
+        root.meta.source_module = if $parts.length() > 3 {
+          $parts.index(3)
+        } else {
+          "unknown"
+        }
+
+output:
+  switch:
+    cases:
+      - check: this.meta.category == "health"
+        output:
+          http_client:
+            url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/health"
+            verb: POST
+            headers:
+              Content-Type: application/json
+            max_in_flight: 64
+            timeout: 10s
+            retry_period: 5s
+            retries: 3
+
+      - check: this.meta.category == "incident"
+        output:
+          http_client:
+            url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/incident"
+            verb: POST
+            headers:
+              Content-Type: application/json
+            max_in_flight: 32
+            timeout: 10s
+            retry_period: 5s
+            retries: 3
+
+      - check: this.meta.category == "metric"
+        output:
+          http_client:
+            url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/metric"
+            verb: POST
+            headers:
+              Content-Type: application/json
+            max_in_flight: 64
+            timeout: 10s
+            retry_period: 5s
+            retries: 3
+
+      - check: this.meta.category == "observability"
+        output:
+          http_client:
+            url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/observability"
+            verb: POST
+            headers:
+              Content-Type: application/json
+            max_in_flight: 32
+            timeout: 10s
+            retry_period: 5s
+            retries: 3
+
+      # Default: generic event ingestion
+      - output:
+          http_client:
+            url: "${RUST_API_URL:http://localhost:8091}/api/v1/ingest/event"
+            verb: POST
+            headers:
+              Content-Type: application/json
+            max_in_flight: 32
+            timeout: 10s
+            retry_period: 5s
+            retries: 3
+
+  # Dead letter queue for failed messages
+  fallback:
+    kafka:
+      addresses:
+        - "${REDPANDA_BROKERS:localhost:9092}"
+      topic: "${ENV:dev}.${ORG:abiola}.erp.aiops.ingestion.dlq"
+      client_id: "aiops-ingestion-dlq-producer"
+      compression: snappy
+      sasl:
+        mechanism: SCRAM-SHA-256
+        user: "svc-erp-aiops"
+        password: "${REDPANDA_PASSWORD:}"
+      tls:
+        enabled: "${REDPANDA_TLS_ENABLED:false}"
+
+metrics:
+  prometheus:
+    prefix: "aiops_ingestion"
+
+logger:
+  level: INFO
+  format: json

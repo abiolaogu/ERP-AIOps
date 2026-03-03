@@ -1,0 +1,245 @@
+# Hasura Actions: Custom business logic handlers for ERP-AIOps
+# 4 existing actions + 5 new cross-module integration actions = 9 total
+
+actions:
+  # ============================================================
+  # EXISTING ACTIONS (4)
+  # ============================================================
+  - name: detectAnomalies
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/detect-anomalies"
+      timeout: 30
+    permissions:
+      - role: user
+      - role: admin
+
+  - name: correlateIncidents
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/correlate-incidents"
+      timeout: 30
+    permissions:
+      - role: user
+      - role: admin
+
+  - name: executePlaybook
+    definition:
+      kind: asynchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/execute-playbook"
+      timeout: 120
+    permissions:
+      - role: admin
+
+  - name: getTopologyMap
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/topology-map"
+      timeout: 15
+    permissions:
+      - role: user
+      - role: admin
+
+  # ============================================================
+  # NEW CROSS-MODULE ACTIONS (5)
+  # ============================================================
+  - name: moduleHealthCheck
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/module-health-check"
+      timeout: 30
+    permissions:
+      - role: user
+      - role: admin
+    comment: "Query health status of any module. Optionally probes live endpoints."
+
+  - name: evaluateGuardrail
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/evaluate-guardrail"
+      timeout: 15
+    permissions:
+      - role: admin
+    comment: "Evaluate an action against AIDD guardrail tiers. Returns tier + approval status."
+
+  - name: createMaintenanceWindow
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/create-maintenance-window"
+      timeout: 15
+    permissions:
+      - role: admin
+    comment: "Schedule a maintenance window to suppress alerts and remediation."
+
+  - name: executeRunbook
+    definition:
+      kind: asynchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/execute-runbook"
+      timeout: 300
+    permissions:
+      - role: admin
+    comment: "Execute a runbook (automated/semi/manual). Guardrail evaluated before execution."
+
+  - name: getSLOStatus
+    definition:
+      kind: synchronous
+      handler: "{{RUST_API_URL}}/api/v1/actions/slo-status"
+      timeout: 15
+    permissions:
+      - role: user
+      - role: admin
+    comment: "Get current SLO status for a module including error budget burn rate."
+
+# ============================================================
+# CUSTOM TYPES
+# ============================================================
+custom_types:
+  input_objects:
+    - name: ModuleHealthCheckInput
+      fields:
+        - name: module_name
+          type: String!
+        - name: probe_live
+          type: Boolean
+          description: "If true, probe live health endpoints in addition to cached status"
+
+    - name: EvaluateGuardrailInput
+      fields:
+        - name: action_type
+          type: String!
+        - name: target_module
+          type: String!
+        - name: parameters
+          type: json
+        - name: requested_by
+          type: String!
+
+    - name: CreateMaintenanceWindowInput
+      fields:
+        - name: name
+          type: String!
+        - name: description
+          type: String
+        - name: target_modules
+          type: "[String!]!"
+        - name: starts_at
+          type: timestamptz!
+        - name: ends_at
+          type: timestamptz!
+        - name: suppress_alerts
+          type: Boolean
+        - name: suppress_remediation
+          type: Boolean
+        - name: suppress_notifications
+          type: Boolean
+        - name: recurrence_rule
+          type: String
+
+    - name: ExecuteRunbookInput
+      fields:
+        - name: runbook_id
+          type: uuid!
+        - name: incident_id
+          type: uuid
+        - name: target_module
+          type: String!
+        - name: parameters
+          type: json
+
+    - name: GetSLOStatusInput
+      fields:
+        - name: module_name
+          type: String!
+        - name: slo_name
+          type: String
+
+  objects:
+    - name: ModuleHealthCheckOutput
+      fields:
+        - name: module_name
+          type: String!
+        - name: status
+          type: String!
+        - name: gateway_healthy
+          type: Boolean!
+        - name: hasura_healthy
+          type: Boolean!
+        - name: database_healthy
+          type: Boolean!
+        - name: latency_p95_ms
+          type: Float
+        - name: error_rate
+          type: Float
+        - name: pod_count
+          type: Int
+        - name: last_heartbeat_at
+          type: timestamptz
+        - name: active_incidents
+          type: Int
+
+    - name: EvaluateGuardrailOutput
+      fields:
+        - name: evaluation_id
+          type: uuid!
+        - name: guardrail_tier
+          type: String!
+        - name: result
+          type: String!
+        - name: risk_score
+          type: Int!
+        - name: approvals_required
+          type: Int!
+        - name: timeout_minutes
+          type: Int!
+        - name: message
+          type: String
+
+    - name: CreateMaintenanceWindowOutput
+      fields:
+        - name: id
+          type: uuid!
+        - name: name
+          type: String!
+        - name: status
+          type: String!
+        - name: starts_at
+          type: timestamptz!
+        - name: ends_at
+          type: timestamptz!
+
+    - name: ExecuteRunbookOutput
+      fields:
+        - name: execution_id
+          type: uuid!
+        - name: runbook_id
+          type: uuid!
+        - name: status
+          type: String!
+        - name: guardrail_evaluation_id
+          type: uuid!
+
+    - name: SLOStatusOutput
+      fields:
+        - name: module_name
+          type: String!
+        - name: slos
+          type: "[SLODetail!]!"
+
+    - name: SLODetail
+      fields:
+        - name: slo_name
+          type: String!
+        - name: slo_type
+          type: String!
+        - name: target_value
+          type: Float!
+        - name: current_value
+          type: Float
+        - name: status
+          type: String!
+        - name: error_budget_remaining_pct
+          type: Float
+        - name: burn_rate
+          type: Float
+        - name: last_evaluated_at
+          type: timestamptz

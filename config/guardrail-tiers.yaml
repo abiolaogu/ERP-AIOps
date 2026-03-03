@@ -1,0 +1,178 @@
+# AIDD Guardrail Tier Configuration
+# Defines action risk classification and approval requirements
+# for AIOps autonomous operations across the Sovereign ERP platform.
+#
+# Tiers:
+#   autonomous  — risk ≤ 3, no approval needed, immediate execution
+#   supervised  — risk ≤ 7, 1 approval required, 30min timeout
+#   protected   — risk ≤ 10, 2 approvals required, 60min timeout
+#
+# Cross-module operations automatically escalate to protected tier.
+
+version: "1.0"
+
+tiers:
+  autonomous:
+    description: "Low-risk actions executed immediately without human approval"
+    max_risk_score: 3
+    approvals_required: 0
+    timeout_minutes: 0
+    actions:
+      - action_type: restart_pod
+        risk_score: 1
+        description: "Restart a single pod in the target module"
+        rollback: "Pod will be rescheduled by Kubernetes automatically"
+        max_per_hour: 10
+
+      - action_type: clear_cache
+        risk_score: 1
+        description: "Flush DragonflyDB cache for a module namespace"
+        rollback: "Cache will be repopulated on next request"
+        max_per_hour: 20
+
+      - action_type: flush_queue
+        risk_score: 2
+        description: "Drain a Redpanda DLQ topic to reprocessing"
+        rollback: "Messages remain in DLQ if reprocessing fails"
+        max_per_hour: 5
+
+      - action_type: scale_up_by_one
+        risk_score: 2
+        description: "Add one replica to a deployment"
+        rollback: "Scale back down after cooldown period"
+        max_per_hour: 5
+
+      - action_type: toggle_circuit_breaker
+        risk_score: 3
+        description: "Open/close circuit breaker for an upstream dependency"
+        rollback: "Close circuit breaker to restore traffic"
+        max_per_hour: 10
+
+      - action_type: create_incident
+        risk_score: 1
+        description: "Create a new incident record"
+        rollback: "Close incident if false positive"
+        max_per_hour: 50
+
+      - action_type: send_notification
+        risk_score: 1
+        description: "Send alert via configured notification channels"
+        rollback: "Send resolution notification"
+        max_per_hour: 100
+
+  supervised:
+    description: "Medium-risk actions requiring one approval before execution"
+    max_risk_score: 7
+    approvals_required: 1
+    timeout_minutes: 30
+    escalation_on_timeout: "protected"
+    actions:
+      - action_type: scale_horizontally
+        risk_score: 4
+        description: "Scale deployment to N replicas (N > current + 1)"
+        rollback: "Scale back to original replica count"
+        max_per_hour: 3
+
+      - action_type: config_change
+        risk_score: 5
+        description: "Update ConfigMap or environment variable"
+        rollback: "Revert to previous ConfigMap version"
+        max_per_hour: 3
+
+      - action_type: db_pool_resize
+        risk_score: 5
+        description: "Adjust database connection pool size"
+        rollback: "Revert pool size to previous value"
+        max_per_hour: 2
+
+      - action_type: toggle_feature_flag
+        risk_score: 4
+        description: "Enable or disable a feature flag"
+        rollback: "Toggle flag back to previous state"
+        max_per_hour: 5
+
+      - action_type: rollback_deployment
+        risk_score: 6
+        description: "Roll back to previous deployment revision"
+        rollback: "Re-deploy the rolled-back version"
+        max_per_hour: 2
+
+      - action_type: rate_limit_adjust
+        risk_score: 4
+        description: "Modify rate limiting thresholds for a module"
+        rollback: "Restore original rate limits"
+        max_per_hour: 3
+
+  protected:
+    description: "High-risk actions requiring two approvals and extended oversight"
+    max_risk_score: 10
+    approvals_required: 2
+    timeout_minutes: 60
+    escalation_on_timeout: "deny"
+    actions:
+      - action_type: failover_primary
+        risk_score: 8
+        description: "Failover primary database to standby"
+        rollback: "Failback to original primary after verification"
+        max_per_hour: 1
+
+      - action_type: data_migration
+        risk_score: 9
+        description: "Execute data migration or transformation"
+        rollback: "Restore from pre-migration backup"
+        max_per_hour: 1
+
+      - action_type: schema_change
+        risk_score: 9
+        description: "Apply database schema modification"
+        rollback: "Apply reverse migration"
+        max_per_hour: 1
+
+      - action_type: destroy_resources
+        risk_score: 10
+        description: "Delete Kubernetes resources or infrastructure"
+        rollback: "Recreate from GitOps state"
+        max_per_hour: 1
+
+      - action_type: cross_module_remediation
+        risk_score: 8
+        description: "Execute remediation affecting multiple modules"
+        rollback: "Reverse all module-specific changes"
+        max_per_hour: 1
+
+      - action_type: db_failover
+        risk_score: 9
+        description: "YugabyteDB tablet leader rebalance or region failover"
+        rollback: "Rebalance back to original region"
+        max_per_hour: 1
+
+      - action_type: network_policy_change
+        risk_score: 8
+        description: "Modify Istio or NetworkPolicy rules"
+        rollback: "Revert to previous policy version"
+        max_per_hour: 1
+
+global_rules:
+  # Cross-module operations automatically escalate to protected tier
+  cross_module_auto_escalate: true
+  cross_module_min_tier: "protected"
+
+  # Maintenance window suppression
+  respect_maintenance_windows: true
+  maintenance_override_tier: "protected"
+
+  # Cooldown between same action on same target
+  default_cooldown_seconds: 300
+
+  # Maximum concurrent autonomous actions
+  max_concurrent_autonomous: 5
+  max_concurrent_supervised: 3
+  max_concurrent_protected: 1
+
+  # Audit requirements
+  audit_all_evaluations: true
+  audit_topic: "${ENV}.${ORG}.erp.aiops.guardrail.audit"
+
+  # Denial defaults
+  deny_if_no_tier_match: true
+  deny_if_timeout: true

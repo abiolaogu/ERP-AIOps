@@ -1,0 +1,102 @@
+# AIDD Guardrail Policy — Sovereign ERP Platform
+# Central policy defining how AIOps autonomous operations are governed.
+# Referenced by the Rust API guardrail evaluator and audit pipeline.
+
+version: "1.0"
+policy_name: "sovereign-erp-aidd-guardrail-policy"
+
+# Tier configuration reference
+tier_config_path: "../../config/guardrail-tiers.yaml"
+
+# Cross-module operation rules
+crossModuleOperations:
+  description: "Any action targeting a module other than the originator requires protected tier"
+  rules:
+    - condition: "target_module != source_module"
+      escalate_to: "protected"
+      reason: "Cross-module operations carry higher blast radius"
+    - condition: "target_modules.length > 1"
+      escalate_to: "protected"
+      reason: "Multi-module operations require highest oversight"
+    - condition: "target_module IN ['iam', 'platform', 'finance', 'healthcare']"
+      min_tier: "supervised"
+      reason: "Critical modules require at least supervised tier"
+
+# Audit configuration
+auditTopics:
+  primary: "${ENV}.${ORG}.erp.aiops.guardrail.audit"
+  description: "All guardrail evaluations are published to this immutable audit topic"
+  retention: "infinite"
+  format: "json"
+  required_fields:
+    - evaluation_id
+    - action_type
+    - target_module
+    - guardrail_tier
+    - result
+    - risk_score
+    - timestamp
+
+# Safety constraints
+safetyConstraints:
+  # Never allow autonomous actions on these modules without at least supervised review
+  critical_modules:
+    - iam
+    - platform
+    - finance
+    - healthcare
+    - dbaas
+
+  # Actions that can NEVER be fully autonomous regardless of risk score
+  never_autonomous:
+    - schema_change
+    - data_migration
+    - destroy_resources
+    - db_failover
+    - network_policy_change
+
+  # Maximum cascading actions from a single trigger
+  max_cascade_depth: 3
+
+  # Require human review if more than N actions triggered in 5 minutes
+  human_review_threshold:
+    actions_in_window: 15
+    window_minutes: 5
+
+# Incident auto-response rules
+incidentAutoResponse:
+  enabled: true
+  rules:
+    - severity: critical
+      auto_actions:
+        - create_incident
+        - send_notification
+      escalation_delay_minutes: 5
+    - severity: high
+      auto_actions:
+        - create_incident
+        - send_notification
+      escalation_delay_minutes: 15
+    - severity: medium
+      auto_actions:
+        - create_incident
+      escalation_delay_minutes: 30
+
+# SLO breach auto-response
+sloBreach:
+  enabled: true
+  rules:
+    - type: availability
+      threshold_pct: 10    # <10% error budget remaining
+      actions:
+        - send_notification
+        - create_incident
+    - type: latency
+      threshold_pct: 20
+      actions:
+        - send_notification
+    - type: error_rate
+      threshold_pct: 10
+      actions:
+        - send_notification
+        - create_incident

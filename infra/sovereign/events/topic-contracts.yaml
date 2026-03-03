@@ -1,0 +1,259 @@
+# AIOps Sovereign Topic Contracts
+# Defines topics owned and operated by ERP-AIOps for cross-module integration.
+# All topics follow: [env].[org].erp.aiops.[topic_name]
+
+version: "1.0"
+module: ERP-AIOps
+owner: platform-team
+
+topics:
+  - name: aiops.module.health
+    full_pattern: "${ENV}.${ORG}.erp.aiops.module.health"
+    description: "Health heartbeats from all 24 modules. Written by every module, consumed by AIOps."
+    direction: inbound
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 604800000      # 7 days
+    cleanup_policy: delete
+    tiered_storage: true
+    dlq_enabled: true
+    dlq_topic: "${ENV}.${ORG}.erp.aiops.module.health.dlq"
+    schema:
+      format: json
+      fields:
+        - name: event_id
+          type: string
+          required: true
+        - name: tenant_id
+          type: string
+          required: true
+        - name: module_name
+          type: string
+          required: true
+        - name: event_type
+          type: string
+          required: true
+          enum: ["health.heartbeat"]
+        - name: status
+          type: string
+          required: true
+          enum: ["healthy", "degraded", "critical", "unknown"]
+        - name: gateway_healthy
+          type: boolean
+          required: true
+        - name: hasura_healthy
+          type: boolean
+          required: true
+        - name: latency_p95_ms
+          type: number
+        - name: error_rate
+          type: number
+        - name: pod_count
+          type: integer
+        - name: timestamp
+          type: string
+          format: iso8601
+          required: true
+    producers:
+      - "svc-erp-*"
+    consumers:
+      - group: "cg.${ENV}.${ORG}.aiops.health-ingestion"
+        service: "erp-aiops"
+
+  - name: aiops.alerts
+    full_pattern: "${ENV}.${ORG}.erp.aiops.alerts"
+    description: "Alert notifications published by AIOps. All modules subscribe to receive alerts."
+    direction: outbound
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 2592000000     # 30 days
+    cleanup_policy: delete
+    tiered_storage: true
+    dlq_enabled: true
+    dlq_topic: "${ENV}.${ORG}.erp.aiops.alerts.dlq"
+    schema:
+      format: json
+      fields:
+        - name: event_id
+          type: string
+          required: true
+        - name: tenant_id
+          type: string
+          required: true
+        - name: alert_type
+          type: string
+          required: true
+          enum: ["incident", "anomaly", "slo_breach", "health_degradation", "guardrail"]
+        - name: severity
+          type: string
+          required: true
+          enum: ["critical", "high", "medium", "low", "info"]
+        - name: target_module
+          type: string
+          required: true
+        - name: title
+          type: string
+          required: true
+        - name: description
+          type: string
+        - name: timestamp
+          type: string
+          format: iso8601
+          required: true
+    producers:
+      - "svc-erp-aiops"
+    consumers:
+      - group: "cg.${ENV}.${ORG}.*.alert-receiver"
+        service: "erp-*"
+
+  - name: aiops.guardrail.audit
+    full_pattern: "${ENV}.${ORG}.erp.aiops.guardrail.audit"
+    description: "Immutable audit trail for all guardrail evaluations and decisions."
+    direction: outbound
+    partitions: 6
+    replication_factor: 3
+    retention_ms: -1             # Infinite retention
+    cleanup_policy: compact
+    tiered_storage: true
+    dlq_enabled: false
+    schema:
+      format: json
+      fields:
+        - name: event_id
+          type: string
+          required: true
+        - name: tenant_id
+          type: string
+          required: true
+        - name: evaluation_id
+          type: string
+          required: true
+        - name: action_type
+          type: string
+          required: true
+        - name: target_module
+          type: string
+          required: true
+        - name: guardrail_tier
+          type: string
+          required: true
+          enum: ["autonomous", "supervised", "protected"]
+        - name: result
+          type: string
+          required: true
+          enum: ["approved", "pending_approval", "denied", "timeout", "escalated"]
+        - name: risk_score
+          type: integer
+          required: true
+        - name: approval_chain
+          type: array
+        - name: timestamp
+          type: string
+          format: iso8601
+          required: true
+    producers:
+      - "svc-erp-aiops"
+    consumers:
+      - group: "cg.${ENV}.${ORG}.aiops.audit-writer"
+        service: "erp-aiops"
+
+  - name: aiops.slo.status
+    full_pattern: "${ENV}.${ORG}.erp.aiops.slo.status"
+    description: "SLO status updates for all modules. Published when SLO state changes."
+    direction: outbound
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 2592000000     # 30 days
+    cleanup_policy: compact
+    tiered_storage: true
+    dlq_enabled: true
+    dlq_topic: "${ENV}.${ORG}.erp.aiops.slo.status.dlq"
+    schema:
+      format: json
+      fields:
+        - name: event_id
+          type: string
+          required: true
+        - name: tenant_id
+          type: string
+          required: true
+        - name: module_name
+          type: string
+          required: true
+        - name: slo_name
+          type: string
+          required: true
+        - name: previous_status
+          type: string
+          enum: ["met", "at_risk", "breached", "unknown"]
+        - name: current_status
+          type: string
+          required: true
+          enum: ["met", "at_risk", "breached", "unknown"]
+        - name: current_value
+          type: number
+          required: true
+        - name: target_value
+          type: number
+          required: true
+        - name: error_budget_remaining_pct
+          type: number
+        - name: timestamp
+          type: string
+          format: iso8601
+          required: true
+    producers:
+      - "svc-erp-aiops"
+    consumers:
+      - group: "cg.${ENV}.${ORG}.aiops.slo-processor"
+        service: "erp-aiops"
+      - group: "cg.${ENV}.${ORG}.observability.slo-dashboard"
+        service: "erp-observability"
+
+  - name: aiops.commands
+    full_pattern: "${ENV}.${ORG}.erp.aiops.commands"
+    description: "AIOps issues operational commands to modules (remediation, config changes, scaling)."
+    direction: outbound
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 604800000      # 7 days
+    cleanup_policy: delete
+    tiered_storage: true
+    dlq_enabled: true
+    dlq_topic: "${ENV}.${ORG}.erp.aiops.commands.dlq"
+    schema:
+      format: json
+      fields:
+        - name: event_id
+          type: string
+          required: true
+        - name: tenant_id
+          type: string
+          required: true
+        - name: command_type
+          type: string
+          required: true
+        - name: target_module
+          type: string
+          required: true
+        - name: guardrail_evaluation_id
+          type: string
+          required: true
+        - name: parameters
+          type: object
+          required: true
+        - name: issued_by
+          type: string
+          required: true
+        - name: expires_at
+          type: string
+          format: iso8601
+        - name: timestamp
+          type: string
+          format: iso8601
+          required: true
+    producers:
+      - "svc-erp-aiops"
+    consumers:
+      - group: "cg.${ENV}.${ORG}.*.command-executor"
+        service: "erp-*"

@@ -1,0 +1,316 @@
+# Hasura Remote Schemas: Cross-module GraphQL federation
+# Connects ERP-AIOps Hasura to all 23 other module Hasura instances.
+# Enables cross-module queries: e.g., join incidents with Finance transactions.
+
+remote_schemas:
+  - name: erp_ai_schema
+    definition:
+      url: "http://erp-ai-hasura:19101/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_assistant_schema
+    definition:
+      url: "http://erp-assistant-hasura:19102/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_autonomous_coding_schema
+    definition:
+      url: "http://erp-autonomous-coding-hasura:19103/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_bi_schema
+    definition:
+      url: "http://erp-bi-hasura:19104/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_bss_oss_schema
+    definition:
+      url: "http://erp-bss-oss-hasura:19105/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_church_management_schema
+    definition:
+      url: "http://erp-church-management-hasura:19106/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_commerce_schema
+    definition:
+      url: "http://erp-commerce-hasura:19107/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_crm_schema
+    definition:
+      url: "http://erp-crm-hasura:19108/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_dbaas_schema
+    definition:
+      url: "http://erp-dbaas-hasura:19109/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_ecommerce_schema
+    definition:
+      url: "http://erp-ecommerce-hasura:19110/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_finance_schema
+    definition:
+      url: "http://erp-finance-hasura:19111/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_hcm_schema
+    definition:
+      url: "http://erp-hcm-hasura:19112/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_healthcare_schema
+    definition:
+      url: "http://erp-healthcare-hasura:19113/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_iam_schema
+    definition:
+      url: "http://erp-iam-hasura:19114/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_ipaas_schema
+    definition:
+      url: "http://erp-ipaas-hasura:19115/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_marketing_schema
+    definition:
+      url: "http://erp-marketing-hasura:19116/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_messagebus_schema
+    definition:
+      url: "http://erp-messagebus-hasura:19117/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_platform_schema
+    definition:
+      url: "http://erp-platform-hasura:19118/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_projects_schema
+    definition:
+      url: "http://erp-projects-hasura:19119/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_scm_schema
+    definition:
+      url: "http://erp-scm-hasura:19120/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_school_management_schema
+    definition:
+      url: "http://erp-school-management-hasura:19121/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_observability_schema
+    definition:
+      url: "http://erp-observability-hasura:19122/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_web_hosting_schema
+    definition:
+      url: "http://erp-web-hosting-hasura:19123/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
+
+  - name: erp_workspace_schema
+    definition:
+      url: "http://erp-workspace-hasura:19124/v1/graphql"
+      timeout_seconds: 30
+      forward_client_headers: true
+    permissions:
+      - role: user
+        definition:
+          schema: ""
+      - role: admin
+        definition:
+          schema: ""
